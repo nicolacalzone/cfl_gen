@@ -85,7 +85,7 @@ targets = []
 log.info("\n\n\t*** GRAMMAR ***\n")
 sync_cfg = TreeSynCFG.fromstring(g)
 
-num_sentences = 80000
+num_sentences = 10000
 num_threads = 8  
 
 sources, targets = generate_sentences_threaded(sync_cfg, num_sentences, num_threads)
