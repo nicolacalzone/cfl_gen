@@ -85,8 +85,8 @@ targets = []
 log.info("\n\n\t*** GRAMMAR ***\n")
 sync_cfg = TreeSynCFG.fromstring(g)
 
-num_sentences = 50000
-num_threads = 4  # Adjust the number of threads as needed
+num_sentences = 80000
+num_threads = 8  
 
 sources, targets = generate_sentences_threaded(sync_cfg, num_sentences, num_threads)
 
@@ -100,3 +100,5 @@ with open('db/train/sr', 'w') as source_file:
 with open('db/train/tg', 'w') as target_file:
     for word, freq in target_counter.items():
         target_file.write(f"{word} {freq}\n")
+
+
