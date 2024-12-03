@@ -63,6 +63,10 @@ def generate_sentences(sync_cfg, num_sentences, device):
 
         cycles_counter += 1
 
+        if cycles_counter % 500 == 0:
+            remaining_sentences = num_sentences - len(src_set)
+            print(f"Remaining sentences to produce: {remaining_sentences}")
+
     return list(src_set), list(tgt_set)
 
 def generate_sentences_threaded(sync_cfg, num_sentences, num_threads):
@@ -85,8 +89,8 @@ targets = []
 log.info("\n\n\t*** GRAMMAR ***\n")
 sync_cfg = TreeSynCFG.fromstring(g)
 
-num_sentences = 10000
-num_threads = 8  
+num_sentences = 20000
+num_threads = 4  
 
 sources, targets = generate_sentences_threaded(sync_cfg, num_sentences, num_threads)
 
