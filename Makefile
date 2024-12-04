@@ -7,6 +7,16 @@ all:
 	# - training
 	# - generation
 
+.PRECIOUS: tokenization
+tokenization: 
+	spm_train \
+    --input=train.sr,train.tg \
+    --model_prefix=subword \
+    --vocab_size=8000 \
+    --character_coverage=1.0 \
+    --model_type=bpe
+
+
 .PRECIOUS: preprocess
 preprocess:
 	fairseq-preprocess --source-lang sr --target-lang tg \

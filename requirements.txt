@@ -8,3 +8,4 @@ torchtext
 torchaudio
 sacrebleu
 fairseq
+sentencepiece
