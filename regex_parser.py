@@ -27,7 +27,7 @@ def read_file(file_path):
             else:
                 word, cnt = parts
 
-            print(word, cnt)
+            #print(word, cnt)
             words.append(word)
             counter += int(cnt)
 
@@ -44,13 +44,10 @@ with open('db/train/sr_acceptor', 'w') as sr_acceptor, open('db/train/tg_accepto
     ln = 0
     for word in sources:
         if re.fullmatch(S_regex, word):
-            sr_acceptor.write(f"{word} yes\n")
-            ln += 1
-            continue
+            sr_acceptor.write(f"{word}\tyes\n")
         else:
-            sr_acceptor.write(f"{word} no\n")
-            print(f"{word} does not match regex, line {ln}")
-            ln += 1
+            sr_acceptor.write(f"{word}\tno\n")
+        ln += 1
 
     print("\nTarget words from tg:")
     for word in targets:

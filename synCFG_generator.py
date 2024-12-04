@@ -41,10 +41,9 @@ VP -> drinks // pyot
 """
 
 def generate_sentences(sync_cfg, num_sentences, device):
-    src_set = set()
-    tgt_set = set()
+    sentence_pairs = []
     cycles_counter = 0
-    while len(src_set) < num_sentences and len(tgt_set) < num_sentences:
+    while len(sentence_pairs) < num_sentences:
 
         depth = rand.randint(1, 1000)
         decay_factor = rand.uniform(0.01, 0.99)
@@ -58,30 +57,26 @@ def generate_sentences(sync_cfg, num_sentences, device):
 
         # Filter out empty strings
         if source_sentence and target_sentence:
-            src_set.add(source_sentence)
-            tgt_set.add(target_sentence)
+            sentence_pairs.append((source_sentence, target_sentence))
 
         cycles_counter += 1
 
         if cycles_counter % 500 == 0:
-            remaining_sentences = num_sentences - len(src_set)
+            remaining_sentences = num_sentences - len(sentence_pairs)
             print(f"Remaining sentences to produce: {remaining_sentences}")
 
-    return list(src_set), list(tgt_set)
+    return sentence_pairs
 
 def generate_sentences_threaded(sync_cfg, num_sentences, num_threads):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    src_sets = []
-    tgt_sets = []
+    sentence_pairs = []
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
         futures = [executor.submit(generate_sentences, sync_cfg, num_sentences // num_threads, device) for _ in range(num_threads)]
         for future in concurrent.futures.as_completed(futures):
-            src, tgt = future.result()
-            src_sets.extend(src)
-            tgt_sets.extend(tgt)
+            sentence_pairs.extend(future.result())
 
-    return src_sets, tgt_sets
+    return sentence_pairs
 
 sources = []
 targets = []
@@ -89,13 +84,13 @@ targets = []
 log.info("\n\n\t*** GRAMMAR ***\n")
 sync_cfg = TreeSynCFG.fromstring(g)
 
-num_sentences = 20000
+num_sentences = 25000
 num_threads = 4  
 
-sources, targets = generate_sentences_threaded(sync_cfg, num_sentences, num_threads)
+sentence_pairs = generate_sentences_threaded(sync_cfg, num_sentences, num_threads)
 
-source_counter = Counter(sources)
-target_counter = Counter(targets)
+source_counter = Counter(pair[0] for pair in sentence_pairs)
+target_counter = Counter(pair[1] for pair in sentence_pairs)
 
 with open('db/train/sr', 'w') as source_file:
     for word, freq in source_counter.items():

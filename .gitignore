@@ -2,6 +2,7 @@
 prove/
 logs/
 docs/
+train/backup-train/
 
 # Ignore log files
 *.log
