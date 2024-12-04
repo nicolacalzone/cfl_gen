@@ -34,12 +34,12 @@ def read_file(file_path):
     return words, counter
 
 
-sources, counter_src = read_file('db/train/sr')
-targets, counter_tgt = read_file('db/train/tg')
+sources, counter_src = read_file('db/train/sr.freq')
+targets, counter_tgt = read_file('db/train/tg.freq')
 
 print(counter_src, counter_tgt)
 
-with open('db/train/sr_acceptor', 'w') as sr_acceptor, open('db/train/tg_acceptor', 'w') as tg_acceptor:
+with open('db/train/sr.acceptor', 'w') as sr_acceptor, open('db/train/tg.acceptor', 'w') as tg_acceptor:
     print("Matching words from sr:")
     ln = 0
     for word in sources:

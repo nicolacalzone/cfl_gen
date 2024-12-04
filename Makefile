@@ -11,16 +11,16 @@ all:
 .PRECIOUS: pretokenize
 pretokenize: 
 	spm_train \
-    --input=db/train/sr,db/train/tg \
+    --input=db/train/sr.clean,db/train/tg.clean \
     --model_prefix=subword \
-    --vocab_size=2280 \
+    --vocab_size=1700 \
     --character_coverage=1.0 \
     --model_type=bpe
 
 .PRECIOUS: tokenize
 tokenize:
-	spm_encode --model=subword.model --output_format=piece < train.sr > train.bpe.sr \
-	spm_encode --model=subword.model --output_format=piece < train.tg > train.bpe.tg 
+	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/sr.clean > db/train/bpe/bpe.sr \
+	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/tg.clean > db/train/bpe/bpe.tg
 
 .PRECIOUS: preprocess_new
 preprocess_new:
