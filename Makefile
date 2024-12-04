@@ -13,7 +13,7 @@ pretokenize:
 	spm_train \
     --input=db/train/sr,db/train/tg \
     --model_prefix=subword \
-    --vocab_size=8000 \
+    --vocab_size=2280 \
     --character_coverage=1.0 \
     --model_type=bpe
 
