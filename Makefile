@@ -11,7 +11,7 @@ all:
 .PRECIOUS: pretokenize
 pretokenize: 
 	spm_train \
-    --input=train.sr,train.tg \
+    --input=db/train/sr,db/train/tg \
     --model_prefix=subword \
     --vocab_size=8000 \
     --character_coverage=1.0 \
