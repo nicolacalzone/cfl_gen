@@ -3,18 +3,37 @@ SHELL=/bin/bash
 all:
 	# Documentation
 	# goals:
-	# - preprocessing
-	# - training
-	# - generation
+	# 	- pretokenize
+	# 	- tokenize
+	# 	- preprocess_new
+	# 	- train
 
-.PRECIOUS: tokenization
-tokenization: 
+.PRECIOUS: pretokenize
+pretokenize: 
 	spm_train \
     --input=train.sr,train.tg \
     --model_prefix=subword \
     --vocab_size=8000 \
     --character_coverage=1.0 \
     --model_type=bpe
+
+.PRECIOUS: tokenize
+tokenize:
+	spm_encode --model=subword.model --output_format=piece < train.sr > train.bpe.sr \
+	spm_encode --model=subword.model --output_format=piece < train.tg > train.bpe.tg 
+
+.PRECIOUS: preprocess_new
+preprocess_new:
+	fairseq-preprocess \
+		--source-lang sr \
+		--target-lang tg \
+		--trainpref train.bpe \
+		--testpref test.bpe \
+		--destdir data-bin \
+		--workers 2 \
+		--srcdict subword.vocab \
+		--tgtdict subword.vocab 
+	touch preprocess_new
 
 
 .PRECIOUS: preprocess
