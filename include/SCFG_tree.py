@@ -192,14 +192,14 @@ class TreeSynCFG:
 
         return TreeSynCFG(Nonterminal('S'), productions)
 
-    def _choose_production(self, symbol, p_factor, depth=5):
+    def _choose_production(self, symbol, p_factor, depth):
         """Choose a production for the given nonterminal symbol, favoring terminal productions as depth decreases."""
         applicable_productions = [prod for prod in self._productions if prod.lhs() == symbol]
         terminal_productions = [prod for prod in applicable_productions if len(prod.source_rhs()) == 1]
         expandable_productions = [prod for prod in applicable_productions if prod not in terminal_productions]
 
         # Increase the probability of choosing terminal productions as depth decreases
-        if terminal_productions and (not expandable_productions or (rand.random() > p_factor)):
+        if terminal_productions and (not expandable_productions or (rand.random() > p_factor )):   
             chosen_production = rand.choice(terminal_productions)
             #log.info(f"Chosen terminal production: {chosen_production}")
             return chosen_production
@@ -213,7 +213,7 @@ class TreeSynCFG:
         return None
 
 
-    def generate_trees(self, p_factor, source_symbol="S", target_symbol="S", depth=5, decay_factor=0.5):
+    def generate_trees(self, p_factor,  depth, source_symbol="S", target_symbol="S"):
         """Generate trees for both source and target synchronously."""
 
         if depth <= 0:
@@ -241,9 +241,10 @@ class TreeSynCFG:
         for i, source_sym in enumerate(source_rhs):
             #print("i:", i, "\n\tsource_sym=", source_sym, "\tsrc_rhs[i]=", source_rhs[i], "\n\ttrg_rhs[i]", target_rhs[i])
 
-            source_child, target_child = self.generate_trees(p_factor, 
-                                                             source_sym, target_rhs[i],  
-                                                            depth - 1, decay_factor)
+            source_child, target_child = self.generate_trees(
+                                                                p_factor, depth - 1,
+                                                                source_sym, target_rhs[i],  
+                                                            )
 
             source_node.add_child(source_child)
             target_node.add_child(target_child)
@@ -277,10 +278,10 @@ class TreeSynCFG:
         
         return " ".join(sentence)
 
-    def produce(self, p_factor, depth=5, decay_factor=0.5):
+    def produce(self, p_factor, depth):
         """Generate trees and sentences for both source and target."""
         
-        source_tree, target_tree = self.generate_trees(p_factor, self._start, self._start, depth=depth, decay_factor=decay_factor)
+        source_tree, target_tree = self.generate_trees(p_factor, depth, self._start, self._start)
         target_tree_reordered = target_tree.sort_children()
 
         source_sentence = self.generate_sentence(source_tree)
@@ -288,7 +289,7 @@ class TreeSynCFG:
 
         return source_tree, source_sentence, target_tree, target_sentence
 
-    def produce_regex(self, depth=5):
+    def produce_regex(self, depth):
         """Generate a regular expression from the source and target trees."""
         pass
 

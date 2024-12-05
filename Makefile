@@ -19,7 +19,7 @@ pretokenize:
 
 .PRECIOUS: tokenize
 tokenize:
-	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/sr.clean > db/train/bpe/bpe.sr \
+	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/sr.clean > db/train/bpe/bpe.sr
 	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/tg.clean > db/train/bpe/bpe.tg
 
 .PRECIOUS: preprocess_new

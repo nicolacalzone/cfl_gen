@@ -46,12 +46,17 @@ F -> F{1} C{2} // C{2} F{1}
 
 A -> a // e
 A -> b // f
+A -> a // g
+
 B -> b // f
 B -> a // e
+
 C -> c // g
 C -> d // h
+
 D -> d // h
 D -> c // g
+
 F -> c // g
 F -> a // e
 """
@@ -62,11 +67,15 @@ def generate_sentences(sync_cfg, num_sentences, device):
     cycles_counter = 0
     while len(sentence_pairs) < num_sentences:
 
-        depth = rand.randint(5, 30)             ## (1, 1000)
-        decay_factor = rand.uniform(0.01, 0.99)  ## (0.01, 0.99)
-        p_factor = rand.uniform(0.32, 0.42)      ## (0.01, 0.99)
+        #decay_factor = rand.uniform(0.01, 0.99)  ## (0.01, 0.99)
 
-        s_tree, s_sentence, t_tree, t_sentence = sync_cfg.produce(p_factor, depth=depth, decay_factor=decay_factor)
+        depth = rand.randint(5, 30)              ## (1, 1000)
+        if depth < 10:
+            p_factor = rand.uniform(0.58, 0.7)      ## (0.01, 0.99)
+        else:
+            p_factor = rand.uniform(0.40, 0.44)
+
+        s_tree, s_sentence, t_tree, t_sentence = sync_cfg.produce(p_factor, depth)
 
         source_sentence_filtered = filter_terminals(s_sentence)
         target_sentence_filtered = filter_terminals(t_sentence)
