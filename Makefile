@@ -3,13 +3,14 @@ SHELL=/bin/bash
 all:
 	# Documentation
 	# goals:
-	# 	- pretokenize
-	# 	- tokenize
-	# 	- preprocess_new
+	# 	- (spm)(fs)pretokenize
+	# 	- (spm)(fs)tokenize
+	# 	- preprocess
+	# 	- preprocess_old
 	# 	- train
 
-.PRECIOUS: pretokenize
-pretokenize: 
+.PRECIOUS: spm_pretokenize
+spm_pretokenize: 
 	spm_train \
     --input=db/train/sr.clean,db/train/tg.clean \
     --model_prefix=subword \
@@ -17,13 +18,13 @@ pretokenize:
     --character_coverage=1.0 \
     --model_type=bpe
 
-.PRECIOUS: tokenize
-tokenize:
+.PRECIOUS: spm_tokenize
+spm_tokenize:
 	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/sr.clean > db/train/bpe/bpe.sr
 	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/tg.clean > db/train/bpe/bpe.tg
 
-.PRECIOUS: preprocess_new
-preprocess_new:
+.PRECIOUS: preprocess
+preprocess:
 	fairseq-preprocess \
 		--source-lang sr \
 		--target-lang tg \
@@ -36,8 +37,8 @@ preprocess_new:
 	touch preprocess_new
 
 
-.PRECIOUS: preprocess
-preprocess:
+.PRECIOUS: preprocess_old
+preprocess_old:
 	fairseq-preprocess --source-lang sr --target-lang tg \
 	   --trainpref db/train --testpref db/test \
 	   --destdir data-bin/preprocessed_ds \
