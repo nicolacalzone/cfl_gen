@@ -45,14 +45,14 @@ def class_chars(chars):
 
 def next_symbol(grammar, item):
 
-    ## PROBABLY HERE I NEED TO ADD SOURCE_RHS AND TARGET_RHS
+    ## HERE I NEED TO ADD SOURCE_RHS AND TARGET_RHS
 
     return grammar.rules[item.rule][item.next] if item.next < len(grammar.rules[item.rule]) else None
 
 
 def name(grammar, item):
 
-    ## PROBABLY HERE I NEED TO ADD SOURCE_RHS AND TARGET_RHS
+    ## HERE I NEED TO ADD SOURCE_RHS AND TARGET_RHS
 
     return grammar.rules[item.rule][0]
 
@@ -192,7 +192,7 @@ if __name__ == "__main__":
     )
 
 
-    input_string = "1+2*3+8"
+    input_string = "1+2*3+5"
     S = build_items(example_grammar, input_string)
     print(f"Input: {input_string}")
     print_items(S, example_grammar)

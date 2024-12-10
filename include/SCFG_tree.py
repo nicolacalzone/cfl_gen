@@ -32,7 +32,7 @@ class ProductionElement:
         return self._isnonterminal
     
     def __repr__(self):
-        return f"Symbol: {self._symbol}, Index: {self._index}, Is Non-terminal: {self._isnonterminal}"
+        return f"{self._symbol}, {self._index}, {self._isnonterminal}"
 
 class SynchronousProduction:
     """
@@ -94,6 +94,7 @@ class TreeSynCFG:
         self._start = start
         self._productions = productions
         self._class_name = "TreeSynCFG"
+        self._translated_grammar = []
 
     def get_productions(self):
         return self._productions
@@ -169,18 +170,32 @@ class TreeSynCFG:
                 
                 source_rhs_clean = []
                 source_indexes = []
+
+                i = 0
                 for elem, idx in source_elements:
                     source_rhs_clean.append(Nonterminal(elem) if elem.isupper() else elem)
-                    source_indexes.append(int(idx) if idx else 't')
-                    #print(elem, idx)
+                    
+                    if elem.isupper(): 
+                        source_indexes.append(int(idx) if idx else i)
+                        i += 2  
+                    else:  
+                        source_indexes.append(int(idx) if idx else i)
+                        i += 1  
 
                                                                     
                 target_rhs_clean = []
                 target_indexes = []
-                for i, (elem, idx) in enumerate(target_elements):
+                i = 0
+                for elem, idx in target_elements:
                     target_rhs_clean.append(Nonterminal(elem) if elem.isupper() else elem)
-                    target_indexes.append(int(idx) if idx else i)
-                    #print(elem, idx)
+                    
+                    if elem.isupper(): 
+                        target_indexes.append(int(idx) if idx else i)
+                        i += 2  
+                    else:  
+                        target_indexes.append(int(idx) if idx else i)
+                        i += 1  
+
                 
                 TreeSynCFG.error_checker(source_rhs_clean, target_rhs_clean, source_indexes, target_indexes)
 
@@ -288,14 +303,31 @@ class TreeSynCFG:
         target_sentence = self.generate_sentence(target_tree_reordered)
 
         return source_tree, source_sentence, target_tree, target_sentence
+    
+    @staticmethod
+    def append(set_, item):
+        if item[0] not in set_:
+            set_[item[0]] = [(item[1], item[2])]
+        else:
+            set_[item[0]].append((item[1], item[2]))
 
-    def produce_regex(self, depth):
-        """Generate a regular expression from the source and target trees."""
-        pass
+    def translate_grammar_for_parser(self):
+        """Generate a parser-like grammar"""
+        parser_grammar = {}
 
-    def build_regex(self, source_tree, target_tree):
-        """Build a regular expression from the source and target trees."""
-        pass
+        for i, prod in enumerate(self._productions):
+            source_elements = prod.list_source_elements()
+            target_elements = prod.list_target_elements()
+
+            #print(f"\n######\ncycle: {i}")
+            #print(f"Source elements: {source_elements}")
+            #print(f"Target elements: {target_elements}")
+
+            TreeSynCFG.append(parser_grammar, (prod.lhs(), source_elements, target_elements))
+
+        return parser_grammar
+        
+
 
 #################################################################
 #   Helper Structures
@@ -351,4 +383,4 @@ class TreeNode:
         for child in self._children:
             child.sort_children()
 
-        return self 
+        return self
