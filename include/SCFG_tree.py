@@ -240,7 +240,7 @@ class TreeSynCFG:
         """Generate trees for both source and target synchronously."""
 
         if depth <= 0:
-            log.info("Depth reached. Returning terminal nodes: {} and {}".format(source_symbol, target_symbol))
+            log.debug("Depth reached. Returning terminal nodes: {} and {}".format(source_symbol, target_symbol))
             return TreeNode(source_symbol), TreeNode(target_symbol)
 
         source_node = TreeNode(source_symbol)
@@ -249,7 +249,7 @@ class TreeSynCFG:
         # Choose a production for the given symbol
         chosen_production = self._choose_production(source_symbol, p_factor, depth)
         if not chosen_production:
-            log.info("No production available. Returning terminal nodes: {} and {}".format(source_symbol, target_symbol))
+            log.debug("No production available. Returning terminal nodes: {} and {}".format(source_symbol, target_symbol))
             return TreeNode(source_symbol), TreeNode(target_symbol)  # No productions available
         
         source_rhs = chosen_production.source_rhs()
@@ -296,7 +296,7 @@ class TreeSynCFG:
     def generate_sentence(self, node):
         """Convert the tree into a sentence."""
         if node is None or not node.get_children():
-            return node.get_value() if node else ""  # Nodo terminale: restituisce il valore
+            return node.get_value() if node else "a"  # Nodo terminale: restituisce il valore
 
         sentence = []
         for child in node.get_children():
