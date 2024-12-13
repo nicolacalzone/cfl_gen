@@ -231,7 +231,7 @@ class TreeSynCFG:
     
         print(f"prod: {applicable_productions},\nsymbol: {symbol},\ndepth: {depth}")
         #log.debug("No applicable production found.")
-        return None
+        return symbol
 
 
     def generate_trees(self, p_factor: float, depth: int, source_symbol="S", target_symbol="S"):
