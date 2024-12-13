@@ -233,6 +233,7 @@ class TreeSynCFG:
             log.info(f"Chosen expandable production: {chosen_production}")
             return chosen_production
         
+        print("\t\tNo production available.\n")
         return None
 
     def generate_trees(self, p_factor: float, depth: int, source_symbol="S", target_symbol="S"):
