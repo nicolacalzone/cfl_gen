@@ -78,9 +78,9 @@ def generate_sentences(sync_cfg, num_sentences, device):
 
         depth = rand.randint(5, 20)              ## (1, 1000)
         if depth < 10:
-            p_factor = rand.uniform(0.93, 0.99)      ## (0.01, 0.99)
+            p_factor = rand.uniform(0.01, 0.99)      ## (0.01, 0.99)
         else:
-            p_factor = rand.uniform(0.93, 0.99)
+            p_factor = rand.uniform(0.01, 0.99)
 
         s_tree, s_sentence, t_tree, t_sentence = sync_cfg.produce(p_factor, depth)
 
