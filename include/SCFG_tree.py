@@ -218,7 +218,7 @@ class TreeSynCFG:
         terminal_productions = [prod for prod in applicable_productions if len(prod.source_rhs()) == 1]
         expandable_productions = [prod for prod in applicable_productions if prod not in terminal_productions]
 
-        if terminal_productions and (not expandable_productions or rand.random() > p_factor):   
+        if terminal_productions and (not expandable_productions):   
             chosen_production = rand.choice(terminal_productions)
             log.info(f"Chosen terminal production: {chosen_production}")
             return chosen_production
@@ -230,9 +230,7 @@ class TreeSynCFG:
         
     
         print(f"prod: {applicable_productions},\nsymbol: {symbol},\ndepth: {depth}")
-        #log.debug("No applicable production found.")
-        return symbol
-
+        return None
 
     def generate_trees(self, p_factor: float, depth: int, source_symbol="S", target_symbol="S"):
         """Generate trees for both source and target synchronously."""
