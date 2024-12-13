@@ -61,6 +61,13 @@ F -> c // g
 F -> a // e
 """
 
+g1 = """
+S -> A{1} B{2} // B{2} A{1}
+A -> A{1} B{2} // B{2} A{1}
+B -> b // d
+A -> a // c
+"""
+
 
 def generate_sentences(sync_cfg, num_sentences, device):
     sentence_pairs = []
@@ -69,11 +76,11 @@ def generate_sentences(sync_cfg, num_sentences, device):
 
         #decay_factor = rand.uniform(0.01, 0.99)  ## (0.01, 0.99)
 
-        depth = rand.randint(5, 30)              ## (1, 1000)
+        depth = rand.randint(5, 20)              ## (1, 1000)
         if depth < 10:
-            p_factor = rand.uniform(0.58, 0.7)      ## (0.01, 0.99)
+            p_factor = rand.uniform(0.93, 0.99)      ## (0.01, 0.99)
         else:
-            p_factor = rand.uniform(0.40, 0.44)
+            p_factor = rand.uniform(0.93, 0.99)
 
         s_tree, s_sentence, t_tree, t_sentence = sync_cfg.produce(p_factor, depth)
 
@@ -82,8 +89,10 @@ def generate_sentences(sync_cfg, num_sentences, device):
         source_sentence = ''.join(source_sentence_filtered)
         target_sentence = ''.join(target_sentence_filtered)
 
-        log.info(f"Source sentence: {source_sentence}")
-        log.info(f"Target sentence: {target_sentence}")
+        #print(f"\nSource sentence: {source_sentence}")
+        #print(f"Source tree: {s_tree}")
+        #print(f"\nTarget sentence: {target_sentence}")
+        #print(f"Target tree: {t_tree}")
 
         # Filter out empty strings
         if source_sentence and target_sentence:
@@ -112,38 +121,41 @@ sources = []
 targets = []
 
 log.info("\n\n\t*** GRAMMAR ***\n")
-sync_cfg = TreeSynCFG.fromstring(g)
+sync_cfg = TreeSynCFG.fromstring(g1)
 
 num_sentences = 5000
-num_threads = 8  
+num_threads = 8
 
 sentence_pairs = generate_sentences_threaded(sync_cfg, num_sentences, num_threads)
 
 source_counter = Counter(pair[0] for pair in sentence_pairs)
 target_counter = Counter(pair[1] for pair in sentence_pairs)
 
-
+name_file_src = "/prove/p_src"
+name_file_tgt = "/prove/p_tgt"
+name_file_src_freq = "/prove/p_src_freq"
+name_file_tgt_freq = "/prove/p_tgt_freq"
 
 # Write frequency files
-with open('db/train/sr.freq', 'w') as source_file:
+with open(f'db/train/{name_file_src_freq}', 'w') as source_file:
     for word, freq in source_counter.items():
         source_file.write(f"{word}\t{freq}\n")
 
-with open('db/train/tg.freq', 'w') as target_file:
+with open(f'db/train/{name_file_tgt_freq}', 'w') as target_file:
     for word, freq in target_counter.items():
         target_file.write(f"{word}\t{freq}\n")
 
 # Write clean files (only words, without frequencies)
-with open('db/train/sr.clean', 'w') as source_file:
+with open(f'db/train/{name_file_src}', 'w') as source_file:
     for word in source_counter.keys():
         source_file.write(f"{word}\n")
 
-with open('db/train/tg.clean', 'w') as target_file:
+with open(f'db/train/{name_file_tgt}', 'w') as target_file:
     for word in target_counter.keys():
         target_file.write(f"{word}\n")
 
-file_path = "db/train/sr.clean"
-main(file_path)
+#file_path = "db/train/sr.clean"
+#main(file_path)
 
 
 

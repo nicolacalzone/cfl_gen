@@ -4,9 +4,11 @@ from collections import Counter
 
 def compute_sentence_length_metrics(file_path):
     with open(file_path, 'r') as file:
-        sentences = [line.strip() for line in file]
+        lines = file.readlines()
+        sentences = [line.strip().split()[0] for line in lines]
+        frequencies = [int(line.strip().split()[1]) for line in lines]
 
-    sentence_lengths = [len(sentence) for sentence in sentences]
+    sentence_lengths = [len(sentence) for sentence, freq in zip(sentences, frequencies) for _ in range(freq)]
 
     max_sentence_length = max(sentence_lengths)
     min_sentence_length = min(sentence_lengths)
@@ -21,10 +23,12 @@ def compute_sentence_length_metrics(file_path):
 
 def compute_letter_counts(file_path):
     with open(file_path, 'r') as file:
-        sentences = [line.strip() for line in file]
+        lines = file.readlines()
+        sentences = [line.strip().split()[0] for line in lines]
+        frequencies = [int(line.strip().split()[1]) for line in lines]
 
-    all_letters = "".join(sentences)  # Join all sentences into one long string
-    letter_counts = Counter(all_letters)  # Count the occurrences of each letter
+    all_letters = "".join([sentence * freq for sentence, freq in zip(sentences, frequencies)])
+    letter_counts = Counter(all_letters)
     print("\nLetter Counts:")
     for letter, count in letter_counts.items():
         print(f"{letter}: {count}")
@@ -39,9 +43,11 @@ def compute_letter_counts(file_path):
 
 def compute_sentence_length_distribution(file_path):
     with open(file_path, 'r') as file:
-        sentences = [line.strip() for line in file]
+        lines = file.readlines()
+        sentences = [line.strip().split()[0] for line in lines]
+        frequencies = [int(line.strip().split()[1]) for line in lines]
 
-    sentence_lengths = [len(sentence) for sentence in sentences]
+    sentence_lengths = [len(sentence) * freq for sentence, freq in zip(sentences, frequencies)]
     sentence_length_distribution = Counter(sentence_lengths)
 
     # Plot the distribution of sentence lengths
@@ -58,5 +64,5 @@ def main(file_path):
     compute_sentence_length_distribution(file_path)
 
 if __name__ == "__main__":
-    file_path = "db/train/sr.clean"
+    file_path = "db/train/prove/p_src_freq"
     main(file_path)

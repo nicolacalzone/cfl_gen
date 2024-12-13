@@ -1,5 +1,6 @@
 from include.SCFG_tree import TreeSynCFG
-from include.cyk import CYK
+from include.cyk_SCFG import CYK
+from include.cyk import CYK as CYK2
 from nltk.grammar import Nonterminal
 from collections import Counter
 import logging as log
@@ -57,19 +58,25 @@ F -> a // e
 """
 
 
-sync_cfg = TreeSynCFG.fromstring(g)
-rules = sync_cfg.translate_grammar_for_parser()
+g1 = """
+S -> A{1} B{2} // B{2} A{1}
+A -> S{1} S{2} // S{2} S{1}
+B -> b // d
+A -> a // c
+"""
 
-for key, values in rules.items():
-    for value in values:
-        print(key, "->", value)
+sync_cfg = TreeSynCFG.fromstring(g1)
+translated_grammar = sync_cfg.translate_grammar_for_parser()
 
-non_terminals = ["S", "A", "B", "C", "D", "E", "F"]
-source_terminals = ["a", "b", "c", "d"]
-target_terminals = ["e", "f", "g", "h"]
+non_terminals = set()
+for key, values in translated_grammar.items():
+    non_terminals.add(key)
+        
+non_terminals = list(non_terminals)
+print(non_terminals)
+ws = "a b b b b".split()
+wt = "d d d d c".split()
+print(f"ws: {ws}, wt: {wt}")
 
-# Given string
-w = "a very heavy orange book".split()
-
-cyk = CYK(non_terminals, source_terminals, target_terminals, rules)
-cyk.cykParse(w)
+cyk = CYK(non_terminals, ws, wt, translated_grammar)
+cyk.cyk_scfg(ws, wt)

@@ -216,12 +216,12 @@ class TreeSynCFG:
         # Increase the probability of choosing terminal productions as depth decreases
         if terminal_productions and (not expandable_productions or (rand.random() > p_factor )):   
             chosen_production = rand.choice(terminal_productions)
-            #log.info(f"Chosen terminal production: {chosen_production}")
+            log.info(f"Chosen terminal production: {chosen_production}")
             return chosen_production
         
         if expandable_productions:
             chosen_production = rand.choice(expandable_productions)
-            #log.info(f"Chosen expandable production: {chosen_production}")
+            log.info(f"Chosen expandable production: {chosen_production}")
             return chosen_production
         
         #log.debug("No applicable production found.")
@@ -232,6 +232,7 @@ class TreeSynCFG:
         """Generate trees for both source and target synchronously."""
 
         if depth <= 0:
+            log.info("Depth reached. Returning terminal nodes: {} and {}".format(source_symbol, target_symbol))
             return TreeNode(source_symbol), TreeNode(target_symbol)
 
         source_node = TreeNode(source_symbol)
@@ -240,8 +241,9 @@ class TreeSynCFG:
         # Choose a production for the given symbol
         chosen_production = self._choose_production(source_symbol, p_factor, depth)
         if not chosen_production:
+            log.info("No production available. Returning terminal nodes: {} and {}".format(source_symbol, target_symbol))
             return TreeNode(source_symbol), TreeNode(target_symbol)  # No productions available
-
+        
         source_rhs = chosen_production.source_rhs()
         target_rhs = chosen_production.target_rhs()
         source_indexes = chosen_production.source_indexes()
@@ -274,9 +276,12 @@ class TreeSynCFG:
                 source_child.set_index(position_source)
                 target_child.set_index(position_target)
 
-            #print(f"Source node at depth {depth}: {source_node}")
-            #print(f"Target node at depth {depth}: {target_node}")
-            
+            log.debug(f"Source node at depth {depth}: {source_node}" + 
+            f"\nSource child at depth {depth}: \n{source_child}")
+
+            log.debug(f"Target node at depth {depth}: {target_node}" +
+                      f"\nTarget child at depth {depth}: \n{target_child}")
+
         return source_node, target_node
 
 
@@ -302,7 +307,7 @@ class TreeSynCFG:
         source_sentence = self.generate_sentence(source_tree)
         target_sentence = self.generate_sentence(target_tree_reordered)
 
-        return source_tree, source_sentence, target_tree, target_sentence
+        return source_tree, source_sentence, target_tree_reordered, target_sentence
     
     @staticmethod
     def append(set_, item):
@@ -318,11 +323,6 @@ class TreeSynCFG:
         for i, prod in enumerate(self._productions):
             source_elements = prod.list_source_elements()
             target_elements = prod.list_target_elements()
-
-            #print(f"\n######\ncycle: {i}")
-            #print(f"Source elements: {source_elements}")
-            #print(f"Target elements: {target_elements}")
-
             TreeSynCFG.append(parser_grammar, (prod.lhs(), source_elements, target_elements))
 
         return parser_grammar
@@ -377,7 +377,7 @@ class TreeNode:
     def sort_children(self):
         """Sort children at each level based on the index, with integers before 't'."""
         # Sort children: first by integer indices, then by 't' if present
-        self._children.sort(key=lambda x: (x._index != 't', x._index))
+        self._children.sort(key=lambda x: (x._index))
         
         # Recursively sort children for each child node
         for child in self._children:
