@@ -9,6 +9,20 @@ all:
 	# 	- preprocess_old
 	# 	- train
 
+run_all: run_synCFG run_metrics show_src_freq
+
+run_synCFG:
+	@echo "Running synCFG_generator.py..."
+	python3 synCFG_generator.py
+
+run_metrics:
+	@echo "Running metrics.py..."
+	python3 metrics/metrics.py
+
+show_src_freq:
+	@echo "Displaying p_src_freq..."
+	cat db/train/prove/p_src_freq
+
 .PRECIOUS: spm_pretokenize
 spm_pretokenize: 
 	spm_train \
