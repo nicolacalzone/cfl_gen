@@ -203,18 +203,23 @@ class TreeSynCFG:
                 prod = SynchronousProduction(lhs, source_rhs_clean, target_rhs_clean, source_indexes, target_indexes)
                 productions.append(prod)
 
-                #print("##################")
-
         return TreeSynCFG(Nonterminal('S'), productions)
 
-    def _choose_production(self, symbol, p_factor, depth):
+    def _choose_production(self, symbol: str, p_factor: float, depth: int):
         """Choose a production for the given nonterminal symbol, favoring terminal productions as depth decreases."""
+       
+       ## Find Applicable Productions
         applicable_productions = [prod for prod in self._productions if prod.lhs() == symbol]
+
+       # From Applicable Productions, 
+       # find:
+       #    - Terminal Productions 
+       #    - Expandable Productions
         terminal_productions = [prod for prod in applicable_productions if len(prod.source_rhs()) == 1]
         expandable_productions = [prod for prod in applicable_productions if prod not in terminal_productions]
 
         # Increase the probability of choosing terminal productions as depth decreases
-        if terminal_productions and (not expandable_productions or (rand.random() > p_factor )):   
+        if terminal_productions and (not expandable_productions or (rand.random() > p_factor)):   
             chosen_production = rand.choice(terminal_productions)
             log.info(f"Chosen terminal production: {chosen_production}")
             return chosen_production
@@ -228,7 +233,7 @@ class TreeSynCFG:
         return None
 
 
-    def generate_trees(self, p_factor,  depth, source_symbol="S", target_symbol="S"):
+    def generate_trees(self, p_factor: float, depth: int, source_symbol="S", target_symbol="S"):
         """Generate trees for both source and target synchronously."""
 
         if depth <= 0:
@@ -298,7 +303,7 @@ class TreeSynCFG:
         
         return " ".join(sentence)
 
-    def produce(self, p_factor, depth):
+    def produce(self, p_factor: float, depth: int):
         """Generate trees and sentences for both source and target."""
         
         source_tree, target_tree = self.generate_trees(p_factor, depth, self._start, self._start)
@@ -309,6 +314,18 @@ class TreeSynCFG:
 
         return source_tree, source_sentence, target_tree_reordered, target_sentence
     
+
+
+    ######### SEPARATED METHODS #########
+    """
+        functions:
+            - translate_grammar_for_parser(self)
+            - append(set_, item)
+
+        description:
+            Two functions to translate the grammar into a grammar 
+            that can be read by the parser in the main program.
+    """
     @staticmethod
     def append(set_, item):
         if item[0] not in set_:

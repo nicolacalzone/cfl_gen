@@ -123,8 +123,8 @@ targets = []
 log.info("\n\n\t*** GRAMMAR ***\n")
 sync_cfg = TreeSynCFG.fromstring(g1)
 
-num_sentences = 5000
-num_threads = 8
+num_sentences = 500
+num_threads = 2
 
 sentence_pairs = generate_sentences_threaded(sync_cfg, num_sentences, num_threads)
 
