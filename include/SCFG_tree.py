@@ -219,22 +219,17 @@ class TreeSynCFG:
         terminal_productions = [prod for prod in applicable_productions if len(prod.source_rhs()) == 1]
         expandable_productions = [prod for prod in applicable_productions if prod not in terminal_productions]
 
-        print(f"Symbol: {symbol}"+
-              f"\nApplicable productions: {applicable_productions}")
-        print(f"\tTerminal productions: {terminal_productions}")
-        print(f"\tExpandable productions: {expandable_productions}")
-
         if terminal_productions and (not expandable_productions or rand.random() < p_factor):   
             chosen_production = rand.choice(terminal_productions)
-            log.info(f"Chosen terminal production: {chosen_production}")
+            #log.info(f"Chosen terminal production: {chosen_production}")
             return chosen_production
         
         if expandable_productions:
             chosen_production = rand.choice(expandable_productions)
-            log.info(f"Chosen expandable production: {chosen_production}")
+            #log.info(f"Chosen expandable production: {chosen_production}")
             return chosen_production
         
-        print("\t\tNo production available.\n")
+        #print("\t\tNo production available.\n")
         return None
 
     def generate_trees(self, p_factor: float, depth: int, source_symbol="S", target_symbol="S", debug=False):
@@ -261,13 +256,11 @@ class TreeSynCFG:
         target_indexes = chosen_production.target_indexes()
 
         if debug:
-            print(f"Depth: {depth}")
-            print(f"Chosen production: {chosen_production}")
-            print(f"Source RHS: {source_rhs}, Target RHS: {target_rhs}")
+            log.debug(f"Depth: {depth}" + f"\nChosen production: {chosen_production}" + f"\nSource RHS: {source_rhs}, Target RHS: {target_rhs}")
 
         for i, source_sym in enumerate(source_rhs):
             if debug:
-                print("i:", i, "\n\tsource_sym=", source_sym, "\tsrc_rhs[i]=", source_rhs[i], "\n\ttrg_rhs[i]", target_rhs[i])
+                log.debug("i:", i, "\n\tsource_sym=", source_sym, "\tsrc_rhs[i]=", source_rhs[i], "\n\ttrg_rhs[i]", target_rhs[i])
 
             source_child, target_child = self.generate_trees(
                                                                 p_factor, depth - 1,
@@ -302,7 +295,7 @@ class TreeSynCFG:
                 sentence.append(str(child_sentence))
         
         if debug:
-            print(f"Generated sentence so far: {' '.join(sentence)}")
+            log.debug(f"Generated sentence so far: {' '.join(sentence)}")
         return " ".join(sentence)
 
     def produce(self, p_factor: float, depth: int, debug=False):
@@ -316,11 +309,11 @@ class TreeSynCFG:
 
         if 'a' not in source_sentence and 'b' in source_sentence:
             debug = True
-            print("Source sentence contains only 'b's and no 'a's.")
-            print(f"Source tree: {source_tree}")
-            print(f"Source sentence: {source_sentence}")
-            print(f"Target tree: {target_tree_reordered}")
-            print(f"Target sentence: {target_sentence}")
+            log.debug("Source sentence contains only 'b's and no 'a's.")
+            log.debug(f"Source tree: {source_tree}")
+            log.debug(f"Source sentence: {source_sentence}")
+            log.debug(f"Target tree: {target_tree_reordered}")
+            log.debug(f"Target sentence: {target_sentence}")
 
         self._debug_info.append({
             'source_tree': source_tree,
