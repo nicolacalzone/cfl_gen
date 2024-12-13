@@ -95,6 +95,7 @@ class TreeSynCFG:
         self._productions = productions
         self._class_name = "TreeSynCFG"
         self._translated_grammar = []
+        self._debug_info = []  # Store debug information for each produced sentence
 
     def get_productions(self):
         return self._productions
@@ -236,11 +237,12 @@ class TreeSynCFG:
         print("\t\tNo production available.\n")
         return None
 
-    def generate_trees(self, p_factor: float, depth: int, source_symbol="S", target_symbol="S"):
+    def generate_trees(self, p_factor: float, depth: int, source_symbol="S", target_symbol="S", debug=False):
         """Generate trees for both source and target synchronously."""
 
         if depth <= 0:
-            log.debug("Depth reached. Returning terminal nodes: {} and {}".format(source_symbol, target_symbol))
+            if debug:
+                log.debug("Depth reached. Returning terminal nodes: {} and {}".format(source_symbol, target_symbol))
             return TreeNode(source_symbol), TreeNode(target_symbol)
 
         source_node = TreeNode(source_symbol)
@@ -249,7 +251,8 @@ class TreeSynCFG:
         # Choose a production for the given symbol
         chosen_production = self._choose_production(source_symbol, p_factor, depth)
         if not chosen_production:
-            log.debug("No production available. Returning terminal nodes: {} and {}".format(source_symbol, target_symbol))
+            if debug:
+                log.debug("No production available. Returning terminal nodes: {} and {}".format(source_symbol, target_symbol))
             return TreeNode(source_symbol), TreeNode(target_symbol)  # No productions available
         
         source_rhs = chosen_production.source_rhs()
@@ -257,18 +260,19 @@ class TreeSynCFG:
         source_indexes = chosen_production.source_indexes()
         target_indexes = chosen_production.target_indexes()
 
-        #print(f"Depth: {depth}")
-        #print(f"Chosen production: {chosen_production}")
-        #print(f"Source RHS: {source_rhs}, Target RHS: {target_rhs}")
-
-        #for i, (source_sym, target_sym) in enumerate(zip(source_rhs, target_rhs)):
+        if debug:
+            print(f"Depth: {depth}")
+            print(f"Chosen production: {chosen_production}")
+            print(f"Source RHS: {source_rhs}, Target RHS: {target_rhs}")
 
         for i, source_sym in enumerate(source_rhs):
-            #print("i:", i, "\n\tsource_sym=", source_sym, "\tsrc_rhs[i]=", source_rhs[i], "\n\ttrg_rhs[i]", target_rhs[i])
+            if debug:
+                print("i:", i, "\n\tsource_sym=", source_sym, "\tsrc_rhs[i]=", source_rhs[i], "\n\ttrg_rhs[i]", target_rhs[i])
 
             source_child, target_child = self.generate_trees(
                                                                 p_factor, depth - 1,
-                                                                source_sym, target_rhs[i],  
+                                                                source_sym, target_rhs[i],
+                                                                debug
                                                             )
 
             source_node.add_child(source_child)
@@ -284,40 +288,53 @@ class TreeSynCFG:
                 source_child.set_index(position_source)
                 target_child.set_index(position_target)
 
-            log.debug(f"Source node at depth {depth}: {source_node}" + 
-            f"\nSource child at depth {depth}: \n{source_child}")
-
-            log.debug(f"Target node at depth {depth}: {target_node}" +
-                      f"\nTarget child at depth {depth}: \n{target_child}")
-
         return source_node, target_node
 
-
-    def generate_sentence(self, node):
+    def generate_sentence(self, node, debug=False):
         """Convert the tree into a sentence."""
         if node is None or not node.get_children():
-            return node.get_value() if node else "a"  # Nodo terminale: restituisce il valore
+            return node.get_value() if node else ""  # Nodo terminale: restituisce il valore
 
         sentence = []
         for child in node.get_children():
-            child_sentence = self.generate_sentence(child)
+            child_sentence = self.generate_sentence(child, debug)
             if not isinstance(child_sentence, Nonterminal):
                 sentence.append(str(child_sentence))
         
+        if debug:
+            print(f"Generated sentence so far: {' '.join(sentence)}")
         return " ".join(sentence)
 
-    def produce(self, p_factor: float, depth: int):
+    def produce(self, p_factor: float, depth: int, debug=False):
         """Generate trees and sentences for both source and target."""
         
-        source_tree, target_tree = self.generate_trees(p_factor, depth, self._start, self._start)
+        source_tree, target_tree = self.generate_trees(p_factor, depth, self._start, self._start, debug)
         target_tree_reordered = target_tree.sort_children()
 
-        source_sentence = self.generate_sentence(source_tree)
-        target_sentence = self.generate_sentence(target_tree_reordered)
+        source_sentence = self.generate_sentence(source_tree, debug)
+        target_sentence = self.generate_sentence(target_tree_reordered, debug)
+
+        if 'a' not in source_sentence and 'b' in source_sentence:
+            debug = True
+            print("Source sentence contains only 'b's and no 'a's.")
+            print(f"Source tree: {source_tree}")
+            print(f"Source sentence: {source_sentence}")
+            print(f"Target tree: {target_tree_reordered}")
+            print(f"Target sentence: {target_sentence}")
+
+        self._debug_info.append({
+            'source_tree': source_tree,
+            'source_sentence': source_sentence,
+            'target_tree': target_tree_reordered,
+            'target_sentence': target_sentence,
+            'debug': debug
+        })
 
         return source_tree, source_sentence, target_tree_reordered, target_sentence
-    
 
+    def get_debug_info(self):
+        """Return the stored debug information."""
+        return self._debug_info
 
     ######### SEPARATED METHODS #########
     """
