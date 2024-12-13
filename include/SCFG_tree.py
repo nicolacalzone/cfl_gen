@@ -219,7 +219,7 @@ class TreeSynCFG:
         expandable_productions = [prod for prod in applicable_productions if prod not in terminal_productions]
 
         # Increase the probability of choosing terminal productions as depth decreases
-        if terminal_productions and (not expandable_productions or (rand.random() > p_factor)):   
+        if terminal_productions or (rand.random() > p_factor):   
             chosen_production = rand.choice(terminal_productions)
             log.info(f"Chosen terminal production: {chosen_production}")
             return chosen_production
