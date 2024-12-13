@@ -47,7 +47,7 @@ def compute_sentence_length_distribution(file_path):
         sentences = [line.strip().split()[0] for line in lines]
         frequencies = [int(line.strip().split()[1]) for line in lines]
 
-    sentence_lengths = [len(sentence) * freq for sentence, freq in zip(sentences, frequencies)]
+    sentence_lengths = [len(sentence) for sentence, freq in zip(sentences, frequencies) for _ in range(freq)]
     sentence_length_distribution = Counter(sentence_lengths)
 
     # Plot the distribution of sentence lengths
