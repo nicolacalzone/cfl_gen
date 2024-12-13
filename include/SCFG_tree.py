@@ -229,7 +229,7 @@ class TreeSynCFG:
             return chosen_production
         
     
-        print(f"Applicable productions: {applicable_productions}")
+        print(f"prod: {applicable_productions},\nsymbol: {symbol},\ndepth: {depth}")
         #log.debug("No applicable production found.")
         return None
 

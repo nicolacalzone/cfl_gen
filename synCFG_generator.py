@@ -124,7 +124,7 @@ log.info("\n\n\t*** GRAMMAR ***\n")
 sync_cfg = TreeSynCFG.fromstring(g1)
 
 num_sentences = 500
-num_threads = 2
+num_threads = 1
 
 sentence_pairs = generate_sentences_threaded(sync_cfg, num_sentences, num_threads)
 
