@@ -124,35 +124,44 @@ log.info("\n\n\t*** GRAMMAR ***\n")
 sync_cfg = TreeSynCFG.fromstring(g1)
 
 num_sentences = 500
-num_threads = 1
+num_threads = 4
 
 sentence_pairs = generate_sentences_threaded(sync_cfg, num_sentences, num_threads)
 
 source_counter = Counter(pair[0] for pair in sentence_pairs)
 target_counter = Counter(pair[1] for pair in sentence_pairs)
 
-name_file_src = "/prove/p_src"
-name_file_tgt = "/prove/p_tgt"
-name_file_src_freq = "/prove/p_src_freq"
-name_file_tgt_freq = "/prove/p_tgt_freq"
 
+dir = "source_target"
+name_file_src = f"{dir}/source.txt"
+name_file_tgt = f"{dir}/target.txt"
+name_parallel_file = f"{dir}/parallel.txt"
+
+#name_file_src_freq = f"/{dir}/p_src_freq"
+#name_file_tgt_freq = f"/{dir}/p_tgt_freq"
 # Write frequency files
-with open(f'db/train/{name_file_src_freq}', 'w') as source_file:
-    for word, freq in source_counter.items():
-        source_file.write(f"{word}\t{freq}\n")
+# with open(f'db/train/{name_file_src_freq}', 'w') as source_file:
+#    for word, freq in source_counter.items():
+#        source_file.write(f"{word}\t{freq}\n")
 
-with open(f'db/train/{name_file_tgt_freq}', 'w') as target_file:
-    for word, freq in target_counter.items():
-        target_file.write(f"{word}\t{freq}\n")
+#with open(f'db/train/{name_file_tgt_freq}', 'w') as target_file:
+#    for word, freq in target_counter.items():
+#        target_file.write(f"{word}\t{freq}\n")
 
-# Write clean files (only words, without frequencies)
+# Write clean Source file
 with open(f'db/train/{name_file_src}', 'w') as source_file:
     for word in source_counter.keys():
         source_file.write(f"{word}\n")
 
+# Write clean Target file
 with open(f'db/train/{name_file_tgt}', 'w') as target_file:
     for word in target_counter.keys():
         target_file.write(f"{word}\n")
+
+# Write clean Parallel file
+with open(f'db/train/{name_parallel_file}', 'w') as parallel_file:
+    for source, target in sentence_pairs:
+        parallel_file.write(f"{source}\t{target}\n")
 
 #file_path = "db/train/sr.clean"
 #main(file_path)

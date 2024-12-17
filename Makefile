@@ -34,8 +34,8 @@ spm_pretokenize:
 
 .PRECIOUS: spm_tokenize
 spm_tokenize:
-	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/sr.clean > db/train/bpe/bpe.sr
-	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/tg.clean > db/train/bpe/bpe.tg
+	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/sr.clean > db/train/bpe/bpe_sr.tok
+	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/tg.clean > db/train/bpe/bpe_tg.tok
 
 .PRECIOUS: preprocess
 preprocess:

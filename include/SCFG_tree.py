@@ -208,15 +208,17 @@ class TreeSynCFG:
 
     def _choose_production(self, symbol: str, p_factor: float, depth: int):
         """Choose a production for the given nonterminal symbol, favoring terminal productions as depth decreases."""
-       
-       ## Find Applicable Productions
+
+        # Find applicable productions for the given symbol
         applicable_productions = [prod for prod in self._productions if prod.lhs() == symbol]
 
-       # From Applicable Productions, 
-       # find:
-       #    - Terminal Productions 
-       #    - Expandable Productions
-        terminal_productions = [prod for prod in applicable_productions if len(prod.source_rhs()) == 1]
+        # Identify terminal productions where RHS contains only terminals
+        terminal_productions = [
+            prod for prod in applicable_productions
+            if all(not isinstance(sym, Nonterminal) for sym in prod.source_rhs())
+        ]
+
+        # Identify expandable productions (those not classified as terminal)
         expandable_productions = [prod for prod in applicable_productions if prod not in terminal_productions]
 
         if terminal_productions and (not expandable_productions or rand.random() < p_factor):   
@@ -228,14 +230,17 @@ class TreeSynCFG:
             chosen_production = rand.choice(expandable_productions)
             #log.info(f"Chosen expandable production: {chosen_production}")
             return chosen_production
-        
-        #print("\t\tNo production available.\n")
+
         return None
 
     def generate_trees(self, p_factor: float, depth: int, source_symbol="S", target_symbol="S", debug=False):
         """Generate trees for both source and target synchronously."""
 
-        if depth <= 0:
+        applicable_productions = [prod for prod in self._productions if prod.lhs() == source_symbol]
+        terminal_productions = [ prod for prod in applicable_productions
+                                if all(not isinstance(sym, Nonterminal) for sym in prod.source_rhs()) ]
+
+        if depth <= 0 and source_symbol in terminal_productions:
             if debug:
                 log.debug("Depth reached. Returning terminal nodes: {} and {}".format(source_symbol, target_symbol))
             return TreeNode(source_symbol), TreeNode(target_symbol)
@@ -259,6 +264,9 @@ class TreeSynCFG:
             log.debug(f"Depth: {depth}" + f"\nChosen production: {chosen_production}" + f"\nSource RHS: {source_rhs}, Target RHS: {target_rhs}")
 
         for i, source_sym in enumerate(source_rhs):
+
+            print(f"Source symbol: {source_sym}, Target symbol: {target_rhs[i]}")
+
             if debug:
                 log.debug("i:", i, "\n\tsource_sym=", source_sym, "\tsrc_rhs[i]=", source_rhs[i], "\n\ttrg_rhs[i]", target_rhs[i])
 
