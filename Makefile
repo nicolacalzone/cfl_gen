@@ -28,7 +28,7 @@ spm_pretokenize:
 	spm_train \
     --input=db/train/source_target/source.txt,db/train/source_target/target.txt \
     --model_prefix=subword \
-    --vocab_size=1700 \
+    --vocab_size=86 \
     --character_coverage=1.0 \
     --model_type=bpe
 
