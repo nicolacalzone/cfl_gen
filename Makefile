@@ -26,7 +26,7 @@ show_src_freq:
 .PRECIOUS: spm_pretokenize
 spm_pretokenize: 
 	spm_train \
-    --input=db/train/sr.clean,db/train/tg.clean \
+    --input=db/train/source_target/source.txt,db/train/source_target/target.txt \
     --model_prefix=subword \
     --vocab_size=1700 \
     --character_coverage=1.0 \
@@ -34,8 +34,8 @@ spm_pretokenize:
 
 .PRECIOUS: spm_tokenize
 spm_tokenize:
-	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/sr.clean > db/train/bpe/bpe_sr.tok
-	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/tg.clean > db/train/bpe/bpe_tg.tok
+	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/source_target/source.txt > db/train/bpe/bpe_sr.tok
+	/usr/bin/spm_encode --model=subword.model --output_format=piece < db/train/source_target/target.txt > db/train/bpe/bpe_tg.tok
 
 .PRECIOUS: preprocess
 preprocess:

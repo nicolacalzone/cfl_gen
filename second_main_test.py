@@ -1,6 +1,5 @@
 from include.SCFG_tree import TreeSynCFG
-from include.cyk_SCFG import CYK
-from include.cyk import CYK as CYK2
+from include.cyk_SCFG_map_reduce import parse_with_mapreduce
 from nltk.grammar import Nonterminal
 from collections import Counter
 import logging as log
@@ -60,7 +59,7 @@ F -> a // e
 
 g1 = """
 S -> A{1} B{2} // B{2} A{1}
-A -> S{1} S{2} // S{2} S{1}
+A -> A{1} B{2} // B{2} A{1}
 B -> b // d
 A -> a // c
 """
@@ -68,15 +67,21 @@ A -> a // c
 sync_cfg = TreeSynCFG.fromstring(g1)
 translated_grammar = sync_cfg.translate_grammar_for_parser()
 
+#print(translated_grammar)
+
 non_terminals = set()
 for key, values in translated_grammar.items():
     non_terminals.add(key)
         
 non_terminals = list(non_terminals)
-print(non_terminals)
 ws = "a b b b b".split()
 wt = "d d d d c".split()
-print(f"ws: {ws}, wt: {wt}")
+print(f"ws: {ws}, wt: {wt}\nnon_terminals: {non_terminals}\n")
 
-cyk = CYK(non_terminals, ws, wt, translated_grammar)
-cyk.cyk_scfg(ws, wt)
+for lhs in translated_grammar:
+    for rhs in translated_grammar[lhs]:
+        print(lhs, rhs)
+
+print("\n\n")
+isaccepted = parse_with_mapreduce(translated_grammar, ws, wt)
+print(isaccepted)

@@ -1,63 +1,98 @@
-# Python implementation for the
-# CYK Algorithm
+from SCFG_tree import ProductionElement
+import torch
 
-class CYK:
-    def __init__(self, non_terminals, source_terminals, target_terminals, translated_grammar):
-        self._non_terminals = non_terminals
-        self._translated_grammar = translated_grammar
-        self._source_terminals = source_terminals
-        self._target_terminals = target_terminals
-    
-    def cyk_scfg(self, w_source, w_target):
-        for rule in self._translated_grammar:
-            for value in self._translated_grammar[rule]:
-                #print(rule, value)
-                continue
 
-        n_src = len(w_source) # Length of the source sentence
-        n_tgt = len(w_target) # Length of the target sentence
+def bitext_parsing(grammar, source, target):
+    """
+        Bitext CKY Algorithm for Synchronous CFGs
 
-        # Initialize CYK tables
-        table_src = [[set() for _ in range(n_src)] for _ in range(n_src)]
-        table_tgt = [[set() for _ in range(n_tgt)] for _ in range(n_tgt)]
+        ** Args: ** 
+            grammar: A dictionary of grammar rules
+            source: Source string (list of tokens)
+            target: Target string (list of tokens)
         
-        link_table = [[set() for _ in range(n_src)] for _ in range(n_src)]
+        ** Returns: ** 
+            Boolean indicating whether the input is accepted
+    """
 
-        # Fill the CYK tables
+    n = len(source)  # Length of source string
+    m = len(target)  # Length of target string
 
-        # First level of the CYK tables
-        for i in range(n_src):
-            for rule in self._translated_grammar:
+    # Initialize a 5D table c[i][j][i'][j'] to store nonterminal symbols
+    c = [[[[[] for _ in range(m+1)] for _ in range(n+1)] for _ in range(m+1)] for _ in range(n+1)]
 
-                # *** Base cases ***
-                # Axioms for Source
-                if any(elem.symbol() == w_source[i] for value in self._translated_grammar[rule] for elem in value[0]):
-                    print("1st if ", i, rule)
-                    table_src[i][i].add(rule)
-                # Axioms for Target
-                if any(elem.symbol() == w_target[i] for value in self._translated_grammar[rule] for elem in value[1]):
-                    print("2nd if ", i, rule)
-                    table_tgt[i][i].add(rule)
+    # AXIOMS - BASE CASE
+    # Fill the table with the terminals.
 
-        # Create links between same symbols in both tables
-        for i in range(n_src):
-            for j in range(n_tgt):
-                for rule in table_src[i][i]:
-                    if rule in table_tgt[j][j]:
-                        link = (rule, (i, i+1), (j, j+1))
-                        link_table[i][i].add(link)
+    # for all i, j, i', j' 
+    for i in range(n):
+        for i_prime in range(m):
 
-        
-        print("\nSource table:")
-        for row in table_src:
-            print(row)
+            for lhs, productions in grammar.items():
+                #   lhs:         S
+                #   productions: [([A, 1, False, B, 2, False], [B, 2, False, A, 1, False])]
+                for src_rhs, tgt_rhs in productions:
+                    #   src_rhs: [A, 1, False, B, 2, False]
+                    #   tgt_rhs: [B, 2, False, A, 1, False]
 
-        print("\nTarget table:")
-        for row in table_tgt:
-            print(row)
-        
-        print("\nLink table:")
-        for row in link_table:
-            print(row)
+                    # Single terminal
+                    if len(src_rhs) == 1 and len(tgt_rhs) == 1:  
+                        if (not src_rhs[0].isnonterminal() and source[i] == src_rhs[0].symbol()) and \
+                           (not tgt_rhs[0].isnonterminal() and target[i_prime] == tgt_rhs[0].symbol()):
+                            print(f"source: {source[i]}, target: {target[i_prime]}")
+                            c[i][i+1][i_prime][i_prime+1].append(lhs)
 
+    #print(c)
 
+    # Main CKY loop
+    for span in range(2, n+1):  # Source span length
+        for span_prime in range(2, m+1):  # Target span length
+            for i in range(n - span + 1):  # Source start
+                j = i + span
+                for i_prime in range(m - span_prime + 1):  # Target start
+                    j_prime = i_prime + span_prime
+
+                    for lhs, productions in grammar.items():
+                        for src_rhs, tgt_rhs in productions:
+                            if len(src_rhs) == 2 and len(tgt_rhs) == 2:  # Binary productions
+                                # Split the spans for both source and target
+                                for k in range(i+1, j):  # Source split
+                                    for k_prime in range(i_prime+1, j_prime):  # Target split
+                                        B, C = src_rhs[0], src_rhs[1]
+                                        B_prime, C_prime = tgt_rhs[0], tgt_rhs[1]
+
+                                        if B.symbol() in c[i][k][i_prime][k_prime] and \
+                                           C.symbol() in c[k][j][k_prime][j_prime]:
+                                            c[i][j][i_prime][j_prime].append(lhs)
+
+    #print(c)
+
+    # Check if the start symbol 'S' spans the entire input strings
+    if "S" in c[0][n][0][m]:
+        print("Accepted: The input strings are in the language.")
+        print(f"Accepted Parse tree: {c[0][n][0][m]}")
+    else:
+        print("Rejected: The input strings are not in the language.")
+        print(f"Rejected Parse tree: {c[0][n][0][m]}")
+
+# Example usage
+if __name__ == "__main__":
+    # Example Grammar
+    grammar = {
+        "S": [([ProductionElement("A", 1), ProductionElement("B", 2)], 
+               [ProductionElement("B", 2), ProductionElement("A", 1)])],
+
+        "A": [
+            ([ProductionElement("a", 0)], [ProductionElement("c", 0)]),
+            ([ProductionElement("A", 1), ProductionElement("B", 2)],
+              [ProductionElement("B", 2), ProductionElement("A", 1)])
+        ],
+
+        "B": [([ProductionElement("b", 0)], [ProductionElement("d", 0)])]
+    }
+
+    # Example input strings
+    source = "a b b b".split()
+    target = "d d d c".split()
+
+    bitext_parsing(grammar, source, target)
