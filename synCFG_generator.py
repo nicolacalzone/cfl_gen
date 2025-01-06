@@ -68,6 +68,8 @@ B -> b // d
 A -> a // c
 """
 
+used_grammar = g
+
 
 def generate_sentences(sync_cfg, num_sentences, device):
     sentence_pairs = []
@@ -80,7 +82,7 @@ def generate_sentences(sync_cfg, num_sentences, device):
         if depth < 10:
             p_factor = rand.uniform(0.03, 0.09)      ## (0.01, 0.99)
         else:
-            p_factor = rand.uniform(0.03, 0.10)
+            p_factor = rand.uniform(0.09, 0.14)
 
         s_tree, s_sentence, t_tree, t_sentence = sync_cfg.produce(p_factor, depth)
 
@@ -121,10 +123,10 @@ sources = []
 targets = []
 
 log.info("\n\n\t*** GRAMMAR ***\n")
-sync_cfg = TreeSynCFG.fromstring(g1)
+sync_cfg = TreeSynCFG.fromstring(used_grammar)
 
-num_sentences = 100000
-num_threads = 4
+num_sentences = 80000
+num_threads = 8
 
 sentence_pairs = generate_sentences_threaded(sync_cfg, num_sentences, num_threads)
 
@@ -133,20 +135,21 @@ target_counter = Counter(pair[1] for pair in sentence_pairs)
 
 
 dir = "source_target"
-name_file_src = f"{dir}/source.txt"
-name_file_tgt = f"{dir}/target.txt"
-name_parallel_file = f"{dir}/parallel.txt"
+ext = ".txt"
+name_file_src = f"{dir}/source{ext}"
+name_file_tgt = f"{dir}/target{ext}"
+name_parallel_file = f"{dir}/parallel{ext}"
 
-#name_file_src_freq = f"/{dir}/p_src_freq"
-#name_file_tgt_freq = f"/{dir}/p_tgt_freq"
+name_file_src_freq = f"{dir}/source_freq{ext}"
+name_file_tgt_freq = f"{dir}/target_freq{ext}"
 # Write frequency files
-# with open(f'db/train/{name_file_src_freq}', 'w') as source_file:
-#    for word, freq in source_counter.items():
-#        source_file.write(f"{word}\t{freq}\n")
+with open(f'db/train/{name_file_src_freq}', 'w') as source_file:
+    for word, freq in source_counter.items():
+        source_file.write(f"{word}\t{freq}\n")
 
-#with open(f'db/train/{name_file_tgt_freq}', 'w') as target_file:
-#    for word, freq in target_counter.items():
-#        target_file.write(f"{word}\t{freq}\n")
+with open(f'db/train/{name_file_tgt_freq}', 'w') as target_file:
+    for word, freq in target_counter.items():
+        target_file.write(f"{word}\t{freq}\n")
 
 # Write clean Source file
 with open(f'db/train/{name_file_src}', 'w') as source_file:

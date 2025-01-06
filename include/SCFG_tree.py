@@ -265,7 +265,7 @@ class TreeSynCFG:
 
         for i, source_sym in enumerate(source_rhs):
 
-            print(f"Source symbol: {source_sym}, Target symbol: {target_rhs[i]}")
+            #print(f"Source symbol: {source_sym}, Target symbol: {target_rhs[i]}")
 
             if debug:
                 log.debug("i:", i, "\n\tsource_sym=", source_sym, "\tsrc_rhs[i]=", source_rhs[i], "\n\ttrg_rhs[i]", target_rhs[i])

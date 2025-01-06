@@ -8,6 +8,10 @@ import pandas as pd
 from collections import defaultdict
 from metrics.metrics import main
 
+"""
+    MAIN TO TEST THE PARSER
+"""
+
 
 pd.set_option('future.no_silent_downcasting', True)
 log.basicConfig(filename='logs/app.log', 

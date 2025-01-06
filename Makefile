@@ -2,6 +2,11 @@ SHELL=/bin/bash
 
 all:
 	# Documentation
+	# runs:
+	# 	- run_synCFG
+	# 	- run_metrics
+	# 	- show_src_freq
+	#
 	# goals:
 	# 	- (spm)(fs)pretokenize
 	# 	- (spm)(fs)tokenize
@@ -48,15 +53,6 @@ preprocess:
 		--workers 2 \
 		--srcdict subword.vocab \
 		--tgtdict subword.vocab 
-	touch preprocess_new
-
-
-.PRECIOUS: preprocess_old
-preprocess_old:
-	fairseq-preprocess --source-lang sr --target-lang tg \
-	   --trainpref db/train --testpref db/test \
-	   --destdir data-bin/preprocessed_ds \
-	   --workers 20
 	touch preprocess
 
 .PRECIOUS: train

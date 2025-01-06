@@ -64,5 +64,5 @@ def main(file_path):
     compute_sentence_length_distribution(file_path)
 
 if __name__ == "__main__":
-    file_path = "db/train/prove/p_src_freq"
+    file_path = "db/train/source_target/source_freq.txt"
     main(file_path)
