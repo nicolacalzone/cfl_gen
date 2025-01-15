@@ -47,12 +47,11 @@ preprocess:
 	fairseq-preprocess \
 		--source-lang sr \
 		--target-lang tg \
-		--trainpref train.bpe \
-		--testpref test.bpe \
+		--trainpref train \
+		--validpref valid \
+		--testpref test \
 		--destdir data-bin \
-		--workers 2 \
-		--srcdict subword.vocab \
-		--tgtdict subword.vocab 
+		--workers 20 \
 	touch preprocess
 
 .PRECIOUS: train

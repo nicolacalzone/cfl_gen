@@ -151,19 +151,19 @@ test_file = f"{dir}/test"
 
 #############   Write clean parallel files
 # train
-with open(f'{parallel_dir}/{train_file}.src', 'w') as parallel_file:
+with open(f'{parallel_dir}/train.src', 'w') as parallel_file:
     # from 0 to train_sentences
     for source, target in sentence_pairs[:train_sentences]:
         parallel_file.write(f"{source}\t{target}\n")
 
 # valid
-with open(f'{parallel_dir}/{valid_file}', 'w') as parallel_file:
+with open(f'{parallel_dir}/valid', 'w') as parallel_file:
     # from train_sentences to train_sentences + valid_sentences
     for source, target in sentence_pairs[train_sentences:train_sentences + valid_sentences]:
         parallel_file.write(f"{source}\t{target}\n")
 
 # test
-with open(f'{parallel_dir}/{test_file}', 'w') as parallel_file:
+with open(f'{parallel_dir}/test', 'w') as parallel_file:
     # from train_sentences + valid_sentences to END
     for source, target in sentence_pairs[train_sentences + valid_sentences:]:
         parallel_file.write(f"{source}\t{target}\n")
