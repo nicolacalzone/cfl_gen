@@ -191,3 +191,7 @@ with open(f"{valid_file}.tgt", 'w') as tgt_file:
 with open(f"{test_file}.src", 'w') as src_file:
     for source, target in sentence_pairs[train_sentences + valid_sentences:]:
         src_file.write(f"{source}\n")
+
+with open(f"{test_file}.tgt", 'w') as tgt_file:
+    for source, target in sentence_pairs[train_sentences + valid_sentences:]:
+        tgt_file.write(f"{target}\n")
