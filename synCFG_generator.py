@@ -9,6 +9,7 @@ from collections import defaultdict
 import concurrent.futures
 import torch
 from metrics.metrics import main
+import os
 
 pd.set_option('future.no_silent_downcasting', True)
 log.basicConfig(filename='logs/app.log', 
@@ -78,11 +79,8 @@ def generate_sentences(sync_cfg, num_sentences, device):
 
         #decay_factor = rand.uniform(0.01, 0.99)  ## (0.01, 0.99)
 
-        depth = rand.randint(5, 20)              ## (1, 1000)
-        if depth < 10:
-            p_factor = rand.uniform(0.03, 0.09)      ## (0.01, 0.99)
-        else:
-            p_factor = rand.uniform(0.09, 0.14)
+        depth = rand.randint(4, 10)              ## (1, 1000)
+        p_factor = rand.uniform(0.55, 0.73)      
 
         s_tree, s_sentence, t_tree, t_sentence = sync_cfg.produce(p_factor, depth)
 
@@ -125,7 +123,7 @@ targets = []
 log.info("\n\n\t*** GRAMMAR ***\n")
 sync_cfg = TreeSynCFG.fromstring(used_grammar)
 
-num_sentences = 80000
+num_sentences = 100000
 num_threads = 8
 
 sentence_pairs = generate_sentences_threaded(sync_cfg, num_sentences, num_threads)
@@ -133,42 +131,73 @@ sentence_pairs = generate_sentences_threaded(sync_cfg, num_sentences, num_thread
 source_counter = Counter(pair[0] for pair in sentence_pairs)
 target_counter = Counter(pair[1] for pair in sentence_pairs)
 
-
-dir = "source_target"
+## Write to files - Strings
+dir = "db"
+train_dir = f"{dir}/train/source_target"
+valid_dir = f"{dir}/valid"
+test_dir = f"{dir}/test"
 ext = ".txt"
-name_file_src = f"{dir}/source{ext}"
-name_file_tgt = f"{dir}/target{ext}"
-name_parallel_file = f"{dir}/parallel{ext}"
 
+name_file_src = f"{train_dir}/source{ext}"
+name_file_tgt = f"{train_dir}/target{ext}"
+
+train_file = f"{train_dir}/train{ext}"
+valid_file = f"{valid_dir}/valid{ext}"
+test_file = f"{test_dir}/test{ext}"
+
+# Ensure directories exist
+os.makedirs(train_dir, exist_ok=True)
+os.makedirs(valid_dir, exist_ok=True)
+os.makedirs(test_dir, exist_ok=True)
+
+#############   Write frequency files
 name_file_src_freq = f"{dir}/source_freq{ext}"
 name_file_tgt_freq = f"{dir}/target_freq{ext}"
-# Write frequency files
-with open(f'db/train/{name_file_src_freq}', 'w') as source_file:
+with open(f'{name_file_src_freq}', 'w') as source_file:
     for word, freq in source_counter.items():
         source_file.write(f"{word}\t{freq}\n")
-
-with open(f'db/train/{name_file_tgt_freq}', 'w') as target_file:
+with open(f'{name_file_tgt_freq}', 'w') as target_file:
     for word, freq in target_counter.items():
         target_file.write(f"{word}\t{freq}\n")
 
-# Write clean Source file
-with open(f'db/train/{name_file_src}', 'w') as source_file:
+
+
+#############   Write clean files
+with open(f'{name_file_src}', 'w') as source_file:
     for word in source_counter.keys():
         source_file.write(f"{word}\n")
-
-# Write clean Target file
-with open(f'db/train/{name_file_tgt}', 'w') as target_file:
+with open(f'{name_file_tgt}', 'w') as target_file:
     for word in target_counter.keys():
         target_file.write(f"{word}\n")
 
-# Write clean Parallel file
-with open(f'db/train/{name_parallel_file}', 'w') as parallel_file:
-    for source, target in sentence_pairs:
+
+
+#############   Write clean parallel files
+
+# 60% train sentences, 20% valid sentences, 20% test sentences
+train_sentences = int(num_sentences * 0.7)
+valid_sentences = int(num_sentences * 0.2)  
+test_sentences = int(num_sentences * 0.1)
+
+# train
+with open(f'{train_file}', 'w') as parallel_file:
+
+    # from 0 to train_sentences
+    for source, target in sentence_pairs[:train_sentences]:
         parallel_file.write(f"{source}\t{target}\n")
 
-#file_path = "db/train/sr.clean"
-#main(file_path)
+# valid
+with open(f'{valid_file}', 'w') as parallel_file:
 
+    # from train_sentences to train_sentences + valid_sentences
+    for source, target in sentence_pairs[train_sentences:train_sentences + valid_sentences]:
+        parallel_file.write(f"{source}\t{target}\n")
 
+# test
+with open(f'{test_file}', 'w') as parallel_file:
+
+    # from train_sentences + valid_sentences to END
+    for source, target in sentence_pairs[train_sentences + valid_sentences:]:
+        parallel_file.write(f"{source}\t{target}\n")
 
 
