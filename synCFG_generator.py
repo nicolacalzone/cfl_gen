@@ -125,79 +125,69 @@ sync_cfg = TreeSynCFG.fromstring(used_grammar)
 
 num_sentences = 100000
 num_threads = 8
-
 sentence_pairs = generate_sentences_threaded(sync_cfg, num_sentences, num_threads)
 
 source_counter = Counter(pair[0] for pair in sentence_pairs)
 target_counter = Counter(pair[1] for pair in sentence_pairs)
 
-## Write to files - Strings
-dir = "db"
-train_dir = f"{dir}/train/source_target"
-valid_dir = f"{dir}/valid"
-test_dir = f"{dir}/test"
-ext = ".txt"
 
-name_file_src = f"{train_dir}/source{ext}"
-name_file_tgt = f"{train_dir}/target{ext}"
-
-train_file = f"{train_dir}/train{ext}"
-valid_file = f"{valid_dir}/valid{ext}"
-test_file = f"{test_dir}/test{ext}"
-
-# Ensure directories exist
-os.makedirs(train_dir, exist_ok=True)
-os.makedirs(valid_dir, exist_ok=True)
-os.makedirs(test_dir, exist_ok=True)
-
-#############   Write frequency files
-name_file_src_freq = f"{dir}/source_freq{ext}"
-name_file_tgt_freq = f"{dir}/target_freq{ext}"
-with open(f'{name_file_src_freq}', 'w') as source_file:
-    for word, freq in source_counter.items():
-        source_file.write(f"{word}\t{freq}\n")
-with open(f'{name_file_tgt_freq}', 'w') as target_file:
-    for word, freq in target_counter.items():
-        target_file.write(f"{word}\t{freq}\n")
-
-
-
-#############   Write clean files
-with open(f'{name_file_src}', 'w') as source_file:
-    for word in source_counter.keys():
-        source_file.write(f"{word}\n")
-with open(f'{name_file_tgt}', 'w') as target_file:
-    for word in target_counter.keys():
-        target_file.write(f"{word}\n")
-
-
-
-#############   Write clean parallel files
-
+## TRAIN / VALID / TEST
 # 60% train sentences, 20% valid sentences, 20% test sentences
 train_sentences = int(num_sentences * 0.7)
 valid_sentences = int(num_sentences * 0.2)  
 test_sentences = int(num_sentences * 0.1)
 
-# train
-with open(f'{train_file}', 'w') as parallel_file:
+## Write to files - Strings
+dir = "output"
+freq_dir = f"{dir}/freq"
+parallel_dir = f"{dir}/parallel"
+os.makedirs(dir         , exist_ok=True)
+os.makedirs(freq_dir    , exist_ok=True)
+os.makedirs(parallel_dir, exist_ok=True)
+train_file = f"{dir}/train"
+valid_file = f"{dir}/valid"
+test_file = f"{dir}/test"
 
+
+#############   Write clean parallel files
+# train
+with open(f'{parallel_dir}/{train_file}.src', 'w') as parallel_file:
     # from 0 to train_sentences
     for source, target in sentence_pairs[:train_sentences]:
         parallel_file.write(f"{source}\t{target}\n")
 
 # valid
-with open(f'{valid_file}', 'w') as parallel_file:
-
+with open(f'{parallel_dir}/{valid_file}', 'w') as parallel_file:
     # from train_sentences to train_sentences + valid_sentences
     for source, target in sentence_pairs[train_sentences:train_sentences + valid_sentences]:
         parallel_file.write(f"{source}\t{target}\n")
 
 # test
-with open(f'{test_file}', 'w') as parallel_file:
-
+with open(f'{parallel_dir}/{test_file}', 'w') as parallel_file:
     # from train_sentences + valid_sentences to END
     for source, target in sentence_pairs[train_sentences + valid_sentences:]:
         parallel_file.write(f"{source}\t{target}\n")
 
 
+### Write clean non-parallel files
+
+# train from 0 to train_sentences
+with open(f"{train_file}.src", 'w') as src_file:
+    for source, target in sentence_pairs[:train_sentences]:
+        src_file.write(f"{source}\n")
+with open(f"{train_file}.tgt", 'w') as tgt_file:
+    for source, target in sentence_pairs[:train_sentences]:
+        tgt_file.write(f"{target}\n")
+
+# valid from train_sentences to train_sentences + valid_sentences
+with open(f"{valid_file}.src", 'w') as src_file:
+    for source, target in sentence_pairs[train_sentences:train_sentences + valid_sentences]:
+        src_file.write(f"{source}\n")
+with open(f"{valid_file}.tgt", 'w') as tgt_file:
+    for source, target in sentence_pairs[train_sentences:train_sentences + valid_sentences]:
+        tgt_file.write(f"{target}\n")
+
+# test from train_sentences + valid_sentences to END
+with open(f"{test_file}.src", 'w') as src_file:
+    for source, target in sentence_pairs[train_sentences + valid_sentences:]:
+        src_file.write(f"{source}\n")
