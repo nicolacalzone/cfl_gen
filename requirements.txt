@@ -3,9 +3,5 @@ pandas
 matplotlib
 nltk
 torch
-torchvision
-torchtext
-torchaudio
 sacrebleu
 fairseq
-sentencepiece

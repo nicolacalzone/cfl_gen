@@ -4,9 +4,7 @@ import logging as log
 import re 
 from collections import Counter
 
-
-
-log.basicConfig(filename='logs/app.log', 
+log.basicConfig(filename='logs/SCFG_Tree.log', 
                     filemode='a',
                     level=log.DEBUG, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -18,9 +16,16 @@ log.basicConfig(filename='logs/app.log',
 
 class ProductionElement:
     def __init__(self, symbol, index):
+        ## Given
         self._symbol = symbol
         self._index = index 
-        self._isnonterminal = isinstance(symbol, Nonterminal)
+
+        ## Derived
+        if isinstance(symbol, Nonterminal):
+            self._isnonterminal = True
+        else:
+            self._isnonterminal = symbol.isupper()
+
     
     def symbol(self):
         return self._symbol
@@ -337,6 +342,9 @@ class TreeSynCFG:
         """Return the stored debug information."""
         return self._debug_info
 
+
+
+
     ######### SEPARATED METHODS #########
     """
         functions:
@@ -347,22 +355,15 @@ class TreeSynCFG:
             Two functions to translate the grammar into a grammar 
             that can be read by the parser in the main program.
     """
-    @staticmethod
-    def append(set_, item):
-        if item[0] not in set_:
-            set_[item[0]] = [(item[1], item[2])]
-        else:
-            set_[item[0]].append((item[1], item[2]))
-
     def translate_grammar_for_parser(self):
         """Generate a parser-like grammar"""
-        parser_grammar = {}
+        parser_grammar = []
 
         for i, prod in enumerate(self._productions):
             source_elements = prod.list_source_elements()
             target_elements = prod.list_target_elements()
-            TreeSynCFG.append(parser_grammar, (prod.lhs(), source_elements, target_elements))
-
+            parser_grammar.append((prod.lhs(), source_elements, target_elements))
+        
         return parser_grammar
         
 

@@ -1,24 +1,20 @@
-from include.SCFG_tree import TreeSynCFG
-from include.cyk_SCFG_map_reduce import parse_with_mapreduce
-from nltk.grammar import Nonterminal
-from collections import Counter
+from SCFG_tree import TreeSynCFG, ProductionElement
 import logging as log
 import random as rand
 import pandas as pd
-from collections import defaultdict
-from metrics.metrics import main
+from parser import SynchronousCFGParser
 
 """
     MAIN TO TEST THE PARSER
 """
 
-
 pd.set_option('future.no_silent_downcasting', True)
-log.basicConfig(filename='logs/app.log', 
+log.basicConfig(filename='logs/parser_test.log', 
                     filemode='a',
                     level=log.DEBUG, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
     
+
 g = """
 S -> A{1} B{2} // B{2} A{1}
 
@@ -68,24 +64,13 @@ B -> b // d
 A -> a // c
 """
 
-sync_cfg = TreeSynCFG.fromstring(g1)
+sync_cfg = TreeSynCFG.fromstring(g)
 translated_grammar = sync_cfg.translate_grammar_for_parser()
+parser = SynchronousCFGParser(translated_grammar)
 
-#print(translated_grammar)
-
-non_terminals = set()
-for key, values in translated_grammar.items():
-    non_terminals.add(key)
-        
-non_terminals = list(non_terminals)
-ws = "a b b b b".split()
-wt = "d d d d c".split()
-print(f"ws: {ws}, wt: {wt}\nnon_terminals: {non_terminals}\n")
-
-for lhs in translated_grammar:
-    for rhs in translated_grammar[lhs]:
-        print(lhs, rhs)
-
-print("\n\n")
-isaccepted = parse_with_mapreduce(translated_grammar, ws, wt)
-print(isaccepted)
+#ws = "aacccccca"
+#wt_false = "ggfggeeeg"
+#wt_true = "gggggggeg"
+#result1 = parser.parse(ws, wt_false)  # False
+#result2 = parser.parse(ws, wt_true)  # True
+#print(result1, result2)

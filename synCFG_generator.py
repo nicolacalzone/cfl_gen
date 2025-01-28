@@ -12,7 +12,7 @@ from metrics.metrics import main
 import os
 
 pd.set_option('future.no_silent_downcasting', True)
-log.basicConfig(filename='logs/app.log', 
+log.basicConfig(filename='logs/SCFG_Generator.log', 
                     filemode='a',
                     level=log.DEBUG, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -79,8 +79,8 @@ def generate_sentences(sync_cfg, num_sentences, device):
 
         #decay_factor = rand.uniform(0.01, 0.99)  ## (0.01, 0.99)
 
-        depth = rand.randint(4, 10)              ## (1, 1000)
-        p_factor = rand.uniform(0.55, 0.73)      
+        depth = rand.randint(4, 7)              ## (1, 1000)
+        p_factor = rand.uniform(0.60, 0.75)      
 
         s_tree, s_sentence, t_tree, t_sentence = sync_cfg.produce(p_factor, depth)
 
@@ -107,6 +107,7 @@ def generate_sentences(sync_cfg, num_sentences, device):
     return sentence_pairs
 
 def generate_sentences_threaded(sync_cfg, num_sentences, num_threads):
+    print("cuda" if torch.cuda.is_available() else "cpu")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     sentence_pairs = []
 
@@ -123,7 +124,7 @@ targets = []
 log.info("\n\n\t*** GRAMMAR ***\n")
 sync_cfg = TreeSynCFG.fromstring(used_grammar)
 
-num_sentences = 100000
+num_sentences = 10000
 num_threads = 8
 sentence_pairs = generate_sentences_threaded(sync_cfg, num_sentences, num_threads)
 
@@ -133,9 +134,9 @@ target_counter = Counter(pair[1] for pair in sentence_pairs)
 
 ## TRAIN / VALID / TEST
 # 60% train sentences, 20% valid sentences, 20% test sentences
-train_sentences = int(num_sentences * 0.7)
+train_sentences = int(num_sentences * 0.6)
 valid_sentences = int(num_sentences * 0.2)  
-test_sentences = int(num_sentences * 0.1)
+test_sentences = int(num_sentences * 0.2)
 
 ## Write to files - Strings
 dir = "output"
