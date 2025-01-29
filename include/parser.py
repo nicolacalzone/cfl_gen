@@ -1,10 +1,18 @@
+from collections import defaultdict
 from typing import List, Set, Tuple, Dict
 from dataclasses import dataclass
 from SCFG_tree import ProductionElement
 from nltk import Nonterminal
-
 from typing import List, Set, Tuple, Dict
 from dataclasses import dataclass
+import logging as log
+
+log.basicConfig(level=log.DEBUG)
+log.basicConfig(filename='logs/Parser.log', 
+                    filemode='a',
+                    level=log.DEBUG, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 @dataclass
 class Item:
@@ -25,9 +33,9 @@ class SynchronousCFGParser:
             - RHS2 is the right-hand side for second grammar
         """
         self.grammar = grammar
-        self.table: Dict[Tuple[int, int, int, int], Set[str]] = {}
-        
-        # Extract all nonterminals for efficiency
+        #self.table: Dict[Tuple[int, int, int, int], Set[str]] = {}
+        self.table = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(set))))
+        self.active_spans = set()
         self.nonterminals = {str(rule[0]) for rule in grammar}
 
     def can_prove_item(self, item: Item, w1: str, w2: str) -> bool:
@@ -39,10 +47,8 @@ class SynchronousCFGParser:
         
         # Case 1: Terminal production (span of length 1)
         if j == i + 1 and jp == ip + 1:
-            # Look for terminal productions that match our input
             for lhs, rhs1, rhs2 in self.grammar:
                 lhs = str(lhs)
-
                 if (lhs == str(item.symbol) and 
                     len(rhs1) == 1 and len(rhs2) == 1 and
                     not rhs1[0].isnonterminal() and not rhs2[0].isnonterminal() and
@@ -51,18 +57,18 @@ class SynchronousCFGParser:
 
         # Case 2: Binary production (longer spans)
         for k in range(i + 1, j):
-            for kp in range(ip + 1, jp):
-                # Check each grammar rule
+            for kp in range(ip + 1, jp):        ## O(n^2) complexity
+
                 for lhs, rhs1, rhs2 in self.grammar:
                     lhs = str(lhs)
-                    # Skip if this isn't a binary production or wrong LHS
+
                     if lhs != str(item.symbol) or len(rhs1) != 2:
                         continue
                     
-                    # We're looking for a rule A → BC with potential reordering
-                    B1, C1 = rhs1[0], rhs1[1]  # Elements in first grammar
+                    # rule A → BC in first grammar
+                    B1, C1 = rhs1[0], rhs1[1] 
 
-                    # Find corresponding elements in second grammar by matching indices
+                    # rule A → CB in second grammar
                     B2_pos = next((idx for idx, elem in enumerate(rhs2) 
                                  if str(elem.symbol()) == str(B1.symbol()) and 
                                  str(elem.index()) == str(B1.index())), None)
@@ -90,7 +96,7 @@ class SynchronousCFGParser:
 
     def get_cell(self, i: int, j: int, ip: int, jp: int) -> Set[str]:
         """Safely retrieve items from parsing table."""
-        return self.table.get((i, j, ip, jp), set())
+        return set(self.table[i][j][ip][jp])
 
     def parse(self, w1: str, w2: str) -> bool:
         """
@@ -99,26 +105,46 @@ class SynchronousCFGParser:
         """
         n, np = len(w1), len(w2)
         
-        # Initialize empty table
-        for i in range(n + 1):
-            for j in range(i, n + 1):
-                for ip in range(np + 1):
-                    for jp in range(ip, np + 1):
-                        self.table[(i, j, ip, jp)] = set()
+        # Step 1-2
+        # Initialize table with empty sets for each span
+        #for i in range(n + 1):
+        #    for j in range(i, n + 1):
+        #        for ip in range(np + 1):
+        #            for jp in range(ip, np + 1):
+        #                self.table[(i, j, ip, jp)] = set()
+
+        print(f"Table size:  {len(self.table)}")          
 
         # Main parsing loop - fill table in order of increasing span size
         for m in range(1, n + np + 1):
             for i in range(n + 1):
+                if i < 0:
+                    continue
                 for k in range(i, min(n + 1, i + m)):
+                    if k > n or k < i:
+                        continue
                     for ip in range(np + 1):
                         for kp in range(ip, min(np + 1, ip + m)):
-                            # Check if spans satisfy the size constraint
-                            if k - i + kp - ip == m:
-                                # Try to prove items for each nonterminal
-                                for A in self.nonterminals:
+
+                            if kp > np or kp < ip:
+                                continue
+
+                            if k - i + kp - ip == m: 
+                                for A in self.nonterminals: 
                                     item = Item(A, i, k, ip, kp)
-                                    if self.can_prove_item(item, w1, w2):
-                                        self.table[(i, k, ip, kp)].add(A)
+                                    
+                                    #if A in self.table[(i, k, ip, kp)]:
+                                    if A in self.table[i][k][ip][kp]:
+                                        continue
+                                    else:
+                                        if self.can_prove_item(item, w1, w2):
+                                            #self.table[(i, k, ip, kp)].add(A)
+                                            self.table[i][k][ip][kp].add(A)
+                                            #self.active_spans.add((i, k, ip, kp))
+        
+        for key in self.table:
+            if self.table[key]:
+                print(f"Table non-empty cell {key}: {set(self.table[key])}")              
 
         # Check if we can derive the full strings
         return 'S' in self.get_cell(0, n, 0, np)
@@ -253,10 +279,26 @@ def main():
         [ProductionElement('e', 0)])
     ]
 
-    #parser1 = SynchronousCFGParser(g1)
-    #result1 = parser1.parse("abbbb", "ddddc")  # Should return True
+    import time
 
+    start = time.time()
     parser2 = SynchronousCFGParser(g2)
-    result2 = parser2.parse("cdccaabbcab", "fgfhgeegegf")  # Should return False
+    result1 = parser2.parse("cbaaba", "aaaaaa")  # Should return False
+    print(f"Result1: {result1}")
+    end = time.time()
+    log.info(f"Time taken to parse the string: {end-start} seconds")
 
-    print(result2)
+    start = time.time()
+    result2 = parser2.parse("cbaaba", "efgeef")  # Should return True
+    print(f"Result2: {result2}")
+    end = time.time()
+    log.info(f"Time taken to parse the string: {end-start} seconds")
+
+    start = time.time()
+    result3 = parser2.parse("aabccaddadcbaddaccbda", "eeehgfgehhefghehheggf")  # Should return True
+    print(f"Result3: {result3}")
+    end = time.time()
+    log.info(f"Time taken to parse the string: {end-start} seconds")
+
+if __name__ == "__main__":
+    main()
