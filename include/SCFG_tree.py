@@ -9,7 +9,6 @@ log.basicConfig(filename='logs/SCFG_Tree.log',
                     level=log.DEBUG, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-
 #################################################################
 # Productions
 ################################################################# 
@@ -26,7 +25,6 @@ class ProductionElement:
         else:
             self._isnonterminal = symbol.isupper()
 
-    
     def symbol(self):
         return self._symbol
     
@@ -98,9 +96,12 @@ class TreeSynCFG:
     def __init__(self, start, productions):
         self._start = start
         self._productions = productions
-        self._class_name = "TreeSynCFG"
         self._translated_grammar = []
         self._debug_info = []  # Store debug information for each produced sentence
+        self._initial_depth = None
+
+    def set_initial_depth(self, depth):
+        self._initial_depth = depth
 
     def get_productions(self):
         return self._productions
@@ -150,9 +151,7 @@ class TreeSynCFG:
 
     @classmethod
     def fromstring(cls, grammar_str: str):
-
         method_name = "TreeSynCFG.fromstring()"
-
         productions = []
         for line in grammar_str.strip().splitlines():
 
@@ -211,35 +210,48 @@ class TreeSynCFG:
 
         return TreeSynCFG(Nonterminal('S'), productions)
 
-    def _choose_production(self, symbol: str, p_factor: float, depth: int):
-        """Choose a production for the given nonterminal symbol, favoring terminal productions as depth decreases."""
+    def choose_production(self, symbol: str, p_factor: float, depth: int):
+        """Choose a production for the given nonterminal symbol, favoring terminal productions as depth decreases.
+        
+            Args: 
+                symbol: The symbol for which to choose a production
+                p_factor: Probability factor to choose terminal productions
+                depth: Current depth of the tree
 
-        # Find applicable productions for the given symbol
+                
+            Internal variables:
+                applicable_productions: Find applicable productions for the given symbol
+                terminal_productions: Find terminal productions where RHS contains only terminals
+                expandable_productions: Find productions that are not classified as terminal
+                
+        """
+
         applicable_productions = [prod for prod in self._productions if prod.lhs() == symbol]
-
-        # Identify terminal productions where RHS contains only terminals
-        terminal_productions = [
-            prod for prod in applicable_productions
-            if all(not isinstance(sym, Nonterminal) for sym in prod.source_rhs())
-        ]
-
-        # Identify expandable productions (those not classified as terminal)
-        expandable_productions = [prod for prod in applicable_productions if prod not in terminal_productions]
-
-        if terminal_productions and (not expandable_productions or rand.random() < p_factor):   
+        terminal_productions = [prod for prod in applicable_productions
+                                if all(not isinstance(sym, Nonterminal) for sym in prod.source_rhs())] 
+        #expandable_productions = [prod for prod in applicable_productions if prod not in terminal_productions]
+        expandable_non_recursive = [prod for prod in applicable_productions if symbol not in prod.source_rhs()]
+        expandable_recursive = [prod for prod in applicable_productions if symbol in prod.source_rhs()]
+        
+        if terminal_productions and not(expandable_non_recursive and expandable_recursive) \
+           and rand.random() < p_factor:
             chosen_production = rand.choice(terminal_productions)
-            #log.info(f"Chosen terminal production: {chosen_production}")
+            return chosen_production
+
+        if expandable_non_recursive:
+            chosen_production = rand.choice(expandable_non_recursive)
             return chosen_production
         
-        if expandable_productions:
-            chosen_production = rand.choice(expandable_productions)
-            #log.info(f"Chosen expandable production: {chosen_production}")
+        if expandable_recursive:
+            chosen_production = rand.choice(expandable_recursive)
             return chosen_production
 
         return None
 
     def generate_trees(self, p_factor: float, depth: int, source_symbol="S", target_symbol="S", debug=False):
         """Generate trees for both source and target synchronously."""
+
+        print(f"Depth: {depth}, Inital depth: {self._initial_depth}")
 
         applicable_productions = [prod for prod in self._productions if prod.lhs() == source_symbol]
         terminal_productions = [ prod for prod in applicable_productions
@@ -254,7 +266,9 @@ class TreeSynCFG:
         target_node = TreeNode(target_symbol)
         
         # Choose a production for the given symbol
-        chosen_production = self._choose_production(source_symbol, p_factor, depth)
+        adjusted_p_factor = p_factor + (1.0 - p_factor) * (1 - (depth / self._initial_depth))
+        print(adjusted_p_factor)
+        chosen_production = self.choose_production(source_symbol, adjusted_p_factor, depth)
         if not chosen_production:
             if debug:
                 log.debug("No production available. Returning terminal nodes: {} and {}".format(source_symbol, target_symbol))
@@ -269,17 +283,13 @@ class TreeSynCFG:
             log.debug(f"Depth: {depth}" + f"\nChosen production: {chosen_production}" + f"\nSource RHS: {source_rhs}, Target RHS: {target_rhs}")
 
         for i, source_sym in enumerate(source_rhs):
-
             #print(f"Source symbol: {source_sym}, Target symbol: {target_rhs[i]}")
-
             if debug:
                 log.debug("i:", i, "\n\tsource_sym=", source_sym, "\tsrc_rhs[i]=", source_rhs[i], "\n\ttrg_rhs[i]", target_rhs[i])
 
-            source_child, target_child = self.generate_trees(
-                                                                p_factor, depth - 1,
-                                                                source_sym, target_rhs[i],
-                                                                debug
-                                                            )
+            source_child, target_child = self.generate_trees(p_factor, depth - 1,
+                                                            source_sym, target_rhs[i],
+                                                            debug)
 
             source_node.add_child(source_child)
             target_node.add_child(target_child)
@@ -309,32 +319,30 @@ class TreeSynCFG:
         
         if debug:
             log.debug(f"Generated sentence so far: {' '.join(sentence)}")
+
         return " ".join(sentence)
 
-    def produce(self, p_factor: float, depth: int, debug=False):
+    def produce(self, p_factor: float, debug=False): # depth: int
         """Generate trees and sentences for both source and target."""
-        
+
+        depth = self._initial_depth
         source_tree, target_tree = self.generate_trees(p_factor, depth, self._start, self._start, debug)
         target_tree_reordered = target_tree.sort_children()
 
         source_sentence = self.generate_sentence(source_tree, debug)
         target_sentence = self.generate_sentence(target_tree_reordered, debug)
 
-        if 'a' not in source_sentence and 'b' in source_sentence:
-            debug = True
-            log.debug("Source sentence contains only 'b's and no 'a's.")
-            log.debug(f"Source tree: {source_tree}")
-            log.debug(f"Source sentence: {source_sentence}")
-            log.debug(f"Target tree: {target_tree_reordered}")
-            log.debug(f"Target sentence: {target_sentence}")
+        #if 'a' not in source_sentence and 'b' in source_sentence:
+        #    debug = True
+            #log.debug("Source sentence contains only 'b's and no 'a's.")
 
-        self._debug_info.append({
-            'source_tree': source_tree,
-            'source_sentence': source_sentence,
-            'target_tree': target_tree_reordered,
-            'target_sentence': target_sentence,
-            'debug': debug
-        })
+        #self._debug_info.append({
+        #    'source_tree': source_tree,
+        #    'source_sentence': source_sentence,
+        #    'target_tree': target_tree_reordered,
+        #    'target_sentence': target_sentence,
+        #    'debug': debug
+        #})
 
         return source_tree, source_sentence, target_tree_reordered, target_sentence
 
