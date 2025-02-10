@@ -61,8 +61,8 @@ if __name__ == '__main__':
     grammars = [utils.constants.g1, utils.constants.g3, utils.constants.g5]
     depths = [6, 15, 30]
     
-    num_sentences = 1000
-    num_threads = 4
+    num_sentences = 500000
+    num_threads = 8
     sources, targets = [], [] 
 
     for grammar in grammars:

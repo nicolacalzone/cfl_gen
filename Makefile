@@ -66,15 +66,21 @@ clean_and_preprocess:
 train:
         @echo "Training..." 
         fairseq-train data-bin \
+                --no-progress-bar \
+                --fp16 \
+                --memory-efficient-fp16	\
                 --arch transformer --share-decoder-input-output-embed \
                 --encoder-layers 6 --decoder-layers 6 \
                 --encoder-embed-dim 512 --decoder-embed-dim 512 \
                 --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 1.0 \
-                --lr 5e-4 --lr-scheduler inverse_sqrt --warmup-updates 4000 \
+                --lr 0.1 --lr-scheduler inverse_sqrt --warmup-updates 4000 \
                 --dropout 0.3 --max-tokens 4096 \
+                --max-epoch 5 \
                 --eval-bleu \
+		--eval-bleu-args '{"beam": 5, "max_len_a": 1.2, "max_len_b": 10}' \
                 --criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
                 --save-dir data-bin/training_checkpoints 
+		--best-checkpoint-metric bleu --maximize-best-checkpoint-metric
         touch train
 
 .PRECIOUS: train_grok
