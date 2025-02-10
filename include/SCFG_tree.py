@@ -4,7 +4,7 @@ import logging as log
 import re 
 from collections import Counter
 
-log.basicConfig(filename='logs/SCFG_Tree.log', 
+log.basicConfig(filename='../logs/SCFG_Tree.log', 
                     filemode='a',
                     level=log.DEBUG, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -214,11 +214,10 @@ class TreeSynCFG:
         """Choose a production for the given nonterminal symbol, favoring terminal productions as depth decreases.
         
             Args: 
-                symbol: The symbol for which to choose a production
-                p_factor: Probability factor to choose terminal productions
-                depth: Current depth of the tree
+                symbol:     The symbol for which to choose a production
+                p_factor:   Probability factor to choose terminal productions
+                depth:      Current depth of the tree
 
-                
             Internal variables:
                 applicable_productions: Find applicable productions for the given symbol
                 terminal_productions: Find terminal productions where RHS contains only terminals
@@ -229,29 +228,27 @@ class TreeSynCFG:
         applicable_productions = [prod for prod in self._productions if prod.lhs() == symbol]
         terminal_productions = [prod for prod in applicable_productions
                                 if all(not isinstance(sym, Nonterminal) for sym in prod.source_rhs())] 
-        #expandable_productions = [prod for prod in applicable_productions if prod not in terminal_productions]
-        expandable_non_recursive = [prod for prod in applicable_productions if symbol not in prod.source_rhs()]
-        expandable_recursive = [prod for prod in applicable_productions if symbol in prod.source_rhs()]
-        
-        if terminal_productions and not(expandable_non_recursive and expandable_recursive) \
-           and rand.random() < p_factor:
+        expandable_productions = [prod for prod in applicable_productions if prod not in terminal_productions]
+        #expandable_recursive = [prod for prod in applicable_productions if symbol in prod.source_rhs()]
+        #expandable_non_recursive = [prod for prod in applicable_productions and not expandable_recursive]
+
+        if terminal_productions and rand.random() < p_factor:
             chosen_production = rand.choice(terminal_productions)
+            #print(f"Symbol: {symbol}, Chosen terminal {len(terminal_productions)}")
             return chosen_production
 
-        if expandable_non_recursive:
-            chosen_production = rand.choice(expandable_non_recursive)
+        if expandable_productions:
+            chosen_production = rand.choice(expandable_productions)
+            #print(f"Symbol: {symbol}, Chosen non expandable {len(expandable_productions)}")
             return chosen_production
+
         
-        if expandable_recursive:
-            chosen_production = rand.choice(expandable_recursive)
-            return chosen_production
-
         return None
 
     def generate_trees(self, p_factor: float, depth: int, source_symbol="S", target_symbol="S", debug=False):
         """Generate trees for both source and target synchronously."""
 
-        print(f"Depth: {depth}, Inital depth: {self._initial_depth}")
+        #print(f"Depth: {depth}, Inital depth: {self._initial_depth}")
 
         applicable_productions = [prod for prod in self._productions if prod.lhs() == source_symbol]
         terminal_productions = [ prod for prod in applicable_productions
@@ -267,7 +264,7 @@ class TreeSynCFG:
         
         # Choose a production for the given symbol
         adjusted_p_factor = p_factor + (1.0 - p_factor) * (1 - (depth / self._initial_depth))
-        print(adjusted_p_factor)
+        #print(adjusted_p_factor)
         chosen_production = self.choose_production(source_symbol, adjusted_p_factor, depth)
         if not chosen_production:
             if debug:
@@ -317,8 +314,8 @@ class TreeSynCFG:
             if not isinstance(child_sentence, Nonterminal):
                 sentence.append(str(child_sentence))
         
-        if debug:
-            log.debug(f"Generated sentence so far: {' '.join(sentence)}")
+        
+        log.debug(f"Generated sentence so far: {' '.join(sentence)}")
 
         return " ".join(sentence)
 

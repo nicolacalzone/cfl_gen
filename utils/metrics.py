@@ -1,7 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 from collections import Counter
 
+
+#####################
+# MEASURES FOR DATA #
+#####################
 def compute_sentence_length_metrics(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
@@ -63,9 +68,65 @@ def measure_metrics(file_path):
     compute_letter_counts(file_path)
     compute_sentence_length_distribution(file_path)
 
+
+
+
+#############################
+# MEASURES FOR TRANSFORMERS #
+#############################
+
+# H = the tokenized Hypothesis loss
+# D = the detokenized Hypothesis loss
+# P = positional token loss --> H is the mean of all the P values
+
+def plot_accuracy(loss: list[int, float]):
+    x = [epoch for epoch, _ in loss]
+    y = [score for _, score in loss]
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(x, y, color='blue')
+    plt.xlabel("Epochs")
+    plt.ylabel("Accuracy")
+    plt.title("Accuracy over Epochs")
+    plt.show()
+    
+
+def plot_bleu(bleu: list[tuple[int, float]]): ##  list( #_epoch, bleu_score )
+    
+    x = [epoch for epoch, _ in bleu]
+    y = [score for _, score in bleu]
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(x, y, color='blue')
+    plt.xlabel("Epochs")
+    plt.ylabel("BLEU Score")
+    plt.title("BLEU Score over Epochs")
+    plt.show()
+
+
+
+def compute_heatmap(file_path):
+    pass
+
+def measure_transformer(file_path):
+    pass 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
     dir = "output/freq/"
-    file_path_src = f"{dir}/train.src"
+    file_path_src = f"{dir}.src"
     file_path_tgt = f"{dir}/train.tgt"
     measure_metrics(file_path_src)
     measure_metrics(file_path_tgt)

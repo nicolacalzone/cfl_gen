@@ -3,10 +3,10 @@ import os
 from collections import Counter
 
 def filter_terminals(sentence):
-    sentence_str = ''.join(str(symbol) for symbol in sentence)
+    sentence_str = ' '.join(str(symbol) for symbol in sentence)
     return [symbol for symbol in sentence_str.split() if symbol != 'eps' and not isinstance(symbol, Nonterminal)]
 
-def build_dataset(sentence_pairs, num_sentences) -> tuple[str, str]:
+def build_dataset(sentence_pairs, num_sentences, depth_str, grammar_str) -> tuple[str, str]:
 
         source_counter = Counter(pair[0] for pair in sentence_pairs)
         target_counter = Counter(pair[1] for pair in sentence_pairs)
@@ -15,7 +15,7 @@ def build_dataset(sentence_pairs, num_sentences) -> tuple[str, str]:
         # 60% train sentences, 20% valid sentences, 20% test sentences
         train_sentences = int(num_sentences * 0.6)
         valid_sentences = int(num_sentences * 0.2)  
-        #test_sentences = int(num_sentences * 0.2)   # no need for test number
+        #test_sentences = int(num_sentences * 0.2)   # no need to compute test_sentences
 
         ## Write to files - Strings
         dir = "output"
@@ -27,9 +27,9 @@ def build_dataset(sentence_pairs, num_sentences) -> tuple[str, str]:
         os.makedirs(freq_dir    , exist_ok=True)
         os.makedirs(parallel_dir, exist_ok=True)
 
-        train_file = f"/train"
-        valid_file = f"/valid"
-        test_file = f"/test"
+        train_file = f"/train" + depth_str + grammar_str
+        valid_file = f"/valid" + depth_str + grammar_str
+        test_file = f"/test" + depth_str + grammar_str
         ext_src = ".src"
         ext_tgt = ".tgt"
         ext_parallel = ".parallel"

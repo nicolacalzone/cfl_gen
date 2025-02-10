@@ -2,25 +2,23 @@ SHELL=/bin/bash
 
 all:
         # Documentation
-        # runs:
-        #       - run_synCFG
-        #       - run_metrics
-        #       - show_src_freq
         #
         # goals:
-        #       - preprocess
-        #       - train
-		# 	 	- train_grok
-		# 		- generate_grok
-		#       - generate
-		#       - generate_try
-		#
-		# utilities:
-		#       - clean_logs
-		#       - preprocess
-		#       - clean_and_preprocess
+        #       preprocess: preprocess the data
+        #       (clean_and_preprocess: clean old saves and preprocess it)
+        #       train: train the model
+        #       generate: generate outputs
+        #       score: score the output
+        #       --> run: run all the goals
+        #
+        # utils:
+        #       run_all: run all the goals
+        #       run_synCFG: run the synCFG_generator.py
+        #       run_metrics: run the metrics.py
+        #       clean_logs: clean the logs
+        #       create_files_for_score: create files for scoring
 
-run_all: run_synCFG run_metrics show_src_freq
+run_all: run_synCFG run_metrics
 
 clean_logs:
 	@echo "Cleaning the logs..." 
@@ -35,13 +33,14 @@ run_metrics:
         @echo "Running metrics.py..."
         python3 metrics/metrics.py
 
-show_src_freq:
-        @echo "Displaying p_src_freq..."
-        cat db/train/prove/p_src_freq
 
+####################
+#### PREPROCESS ####
+####################
 
 .PRECIOUS: preprocess
 preprocess:
+        @echo "Preprocessing..." 
         fairseq-preprocess \
                 --source-lang src \
                 --target-lang tgt \
@@ -54,11 +53,18 @@ preprocess:
 
 .PRECIOUS: clean_and_preprocess
 clean_and_preprocess: 
+        @echo "Cleaning and Preprocessing..." 
         rm -rf data-bin/
         make -B preprocess
 
+
+####################
+##### TRAINING #####
+####################
+
 .PRECIOUS: train
 train:
+        @echo "Training..." 
         fairseq-train data-bin \
                 --arch transformer --share-decoder-input-output-embed \
                 --encoder-layers 6 --decoder-layers 6 \
@@ -66,6 +72,7 @@ train:
                 --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 1.0 \
                 --lr 5e-4 --lr-scheduler inverse_sqrt --warmup-updates 4000 \
                 --dropout 0.3 --max-tokens 4096 \
+                --eval-bleu \
                 --criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
                 --save-dir data-bin/training_checkpoints 
         touch train
@@ -87,33 +94,41 @@ train_grok:
 		--best-checkpoint-metric bleu --maximize-best-checkpoint-metric
 	touch train_grok
 
-.PRECIOUS: generate_grok
-generate_grok:
-	fairseq-generate data-bin \
-		--path data-bin/training_checkpoints/checkpoint_best.pt \
-		--beam 5 --remove-bpe \
-		--results-path data-bin/training_checkpoints/results
-	touch generate_grok
+
+####################
+#### GENERATION ####
+####################
 
 .PRECIOUS: generate
 generate:
-        fairseq-generate data-bin \
-                --path databin/training_checkpoints/checkpoint_best.pt \
-        --beam 5 --batch-size 128 \
-                --source-lang gen_sr --target-lang gen_tg 
-        touch generate
+	fairseq-generate data-bin/training_checkpoints/results/generate_output.txt \
+		--path data-bin/training_checkpoints/checkpoint_best.pt \
+		--batch-size 128 \
+		--beam 5
+                --source-lang gen_sr --target-lang gen_tg
+	touch generate_iwslt14
 
-.PRECIOUS: generate_try
-generate_try:
-        fairseq-generate data-bin \
-                --path data-bin/training_checkpoints/checkpoint_best.pt \
-                --batch-size 128 \
-                --beam 5 \
-                --remove-bpe \
-                --max-len-a 1.0 \
-                --max-len-b 50 \
-                --lenpen 1.0 \
-                --no-repeat-ngram-size 3 \
-                --replace-unk \
-                --sacrebleu
-        touch generate
+####################
+####### SCORE ######
+####################
+
+create_files_for_score:
+        grep ^H gen.out | cut -f3- > gen.out.sys
+	grep ^T gen.out | cut -f2- > gen.out.ref
+
+.PRECIOUS: score
+score:
+        fairseq-score --sys gen.out.sys --ref gen.out.ref
+
+
+
+####################
+#####   ALL   ######
+####################
+.PRECIOUS: run
+run:
+        make -B run_all
+        make -B clean_and_preprocess
+        make -B train
+        make -B generate
+        make -B score
