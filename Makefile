@@ -1,5 +1,14 @@
 SHELL=/bin/bash
 
+# base names for the files
+TRAIN_PREFIX = train_d*_g*
+VALID_PREFIX = valid_d*_g*
+TEST_PREFIX = test_d*_g*
+# input directory for transformer
+DATA_DIR = output/single
+# destination directory from transformer
+DEST_DIR = data-bin
+
 all:
         # Documentation
         #
@@ -44,18 +53,18 @@ preprocess:
         fairseq-preprocess \
                 --source-lang src \
                 --target-lang tgt \
-                --trainpref output/train \
-                --validpref output/valid \
-                --testpref output/test \
-                --destdir data-bin \
+                --trainpref $(DATA_DIR)/$(TRAIN_PREFIX) \
+                --validpref $(DATA_DIR)/$(VALID_PREFIX) \
+                --testpref $(DATA_DIR)/$(TEST_PREFIX) \
+                --destdir $(DATA_DIR) \
                 --workers 20
         touch preprocess
 
 .PRECIOUS: clean_and_preprocess
 clean_and_preprocess: 
         @echo "Cleaning and Preprocessing..." 
-        rm -rf data-bin/
-        make -B preprocess
+        rm -rf data-bin/preprocessed_ds
+        make -B preprocess TRAIN_PREFIX=train_d6_g3 VALID_PREFIX=valid_d6_g3 TEST_PREFIX=test_d6_g3 
 
 
 ####################
@@ -67,38 +76,19 @@ train:
         @echo "Training..." 
         fairseq-train data-bin \
                 --no-progress-bar \
-                --fp16 \
-                --memory-efficient-fp16	\
+                --memory-efficient-fp16 --fp16 \
                 --arch transformer --share-decoder-input-output-embed \
                 --encoder-layers 6 --decoder-layers 6 \
                 --encoder-embed-dim 512 --decoder-embed-dim 512 \
                 --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 1.0 \
                 --lr 0.1 --lr-scheduler inverse_sqrt --warmup-updates 4000 \
-                --dropout 0.3 --max-tokens 4096 \
+                --dropout 0.2 --max-tokens 4000 \
                 --max-epoch 5 \
-                --eval-bleu \
-		--eval-bleu-args '{"beam": 5, "max_len_a": 1.2, "max_len_b": 10}' \
                 --criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
-                --save-dir data-bin/training_checkpoints 
-		--best-checkpoint-metric bleu --maximize-best-checkpoint-metric
+                --save-dir data-bin/training_checkpoints/train_v2 \
+		--best-checkpoint-metric bleu \
+                --maximize-best-checkpoint-metric
         touch train
-
-.PRECIOUS: train_grok
-train_grok:
-	fairseq-train data-bin/grok \
-		--arch transformer_iwslt_de_en \
-		--share-decoder-input-output-embed \
-		--optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 0.0 \
-		--lr 5e-4 --lr-scheduler inverse_sqrt --warmup-updates 4000 \
-		--dropout 0.3 --weight-decay 0.0001 \
-		--criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
-		--max-tokens 4096 \
-		--eval-bleu \
-		--eval-bleu-args '{"beam": 5, "max_len_a": 1.2, "max_len_b": 10}' \
-		--eval-bleu-detok moses \
-		--eval-bleu-remove-bpe \
-		--best-checkpoint-metric bleu --maximize-best-checkpoint-metric
-	touch train_grok
 
 
 ####################
