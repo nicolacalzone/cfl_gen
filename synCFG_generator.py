@@ -1,3 +1,4 @@
+import argparse
 from include.SCFG_tree import TreeSynCFG
 import logging as log
 import random as rand
@@ -58,10 +59,14 @@ def sentence_generator_threaded(sync_cfg, num_sentences, num_threads, depth):
 
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser(description="Generate sentences using grammars and depths.")
+    parser.add_argument('--num_sentences', type=int, required=True, help="Number of sentences to generate.")
+    args = parser.parse_args()
+
     grammars = [utils.constants.g1, utils.constants.g3, utils.constants.g5]
     depths = [6, 15, 30]
     
-    num_sentences = 500000
+    num_sentences = args.num_sentences
     num_threads = 8
     sources, targets = [], [] 
 

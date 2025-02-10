@@ -36,7 +36,7 @@ clean_logs:
 
 run_synCFG:
 	@echo "Running synCFG_generator.py..."
-	python3 synCFG_generator.py
+	python3 synCFG_generator.py --num_sentences 300000
 
 run_metrics:
 	@echo "Running metrics.py..." 
@@ -123,8 +123,9 @@ score:
 ####################
 .PRECIOUS: run
 run:
-	make -B run_all
-	make -B clean_and_preprocess
+	python3 synCFG_generator.py --num_sentences 300
+	rm -rf data-bin/preprocessed_ds
+	make -B preprocess TRAIN_PREFIX=train_d6_g2 VALID_PREFIX=valid_d6_g2 TEST_PREFIX=test_d6_g2
 	make -B train
 	make -B generate
 	make -B score
